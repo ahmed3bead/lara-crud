@@ -35,7 +35,7 @@ class LaraCrudServiceProvider extends ServiceProvider
         ], 'config');
 
         $this->publishes([
-            __DIR__ . '/../templates' => resource_path('ahmed3bead/lara_crud/templates'),
+            __DIR__ . '/templates' => resource_path('ahmed3bead/lara_crud/templates'),
         ], 'templates');
 
         // Register console commands if running in console
