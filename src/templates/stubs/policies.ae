@@ -1,0 +1,47 @@
+<?php
+namespace {{ DummyNamespace }};
+
+use App\{{ main-container-dir-name }}\{{ class_name_plural_name_space }}\Models\{{ ModelName }} as TargetModel;
+use App\{{ main-container-dir-name }}\Operations\CompanyUsers\Models\CompanyUser;
+use Illuminate\Auth\Access\HandlesAuthorization;
+
+
+
+class {{ ClassName }}
+{
+
+        /**
+         * Perform pre-authorization checks on the model.
+         */
+
+        public function before(CompanyUser $user, string $ability): bool|null
+        {
+            if ($user->hasRole('Owner') || $user->hasRole('Account Manager')) {
+                return true;
+            }
+
+            return null; // see the note above in Gate::before about why null must be returned here.
+        }
+
+    use HandlesAuthorization;
+
+    public function view(?CompanyUser $user, TargetModel ${{ ModelName }}LCF }}): bool
+    {
+            return ($user->can('create {{ ModelName }}LCF }}'));
+    }
+
+    public function create(CompanyUser $user): bool
+    {
+        return ($user->can('create {{ ModelName }}LCF }}'));
+    }
+
+    public function update(CompanyUser $user, TargetModel ${{ ModelName }}LCF }}): bool
+    {
+         return ($user->can('edit {{ ModelName }}LCF }}'));
+    }
+
+    public function delete(CompanyUser $user, TargetModel ${{ ModelName }}LCF }}): bool
+    {
+        return ($user->can('delete {{ ModelName }}LCF }}'));
+    }
+}

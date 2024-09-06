@@ -1,0 +1,15 @@
+<?php
+
+namespace {{ DummyNamespace }};
+
+use App\{{ main-container-dir-name }}\{{ class_name_plural_name_space }}\Models\{{ ModelName }};
+use App\{{ main-container-dir-name }}\{{ class_name_plural_name_space }}\Selectors\{{ ModelName }}Selector;
+use Ahmed3bead\LaraCrud\BaseClasses\BaseRepository;
+
+class {{ ClassNamePlural }}Repository extends BaseRepository
+{
+       public function __construct()
+        {
+            parent::__construct(new {{ ModelName }}(),new {{ ModelName }}Selector());
+        }
+}

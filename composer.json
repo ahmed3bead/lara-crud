@@ -1,0 +1,29 @@
+{
+    "name": "ahmed3bead/lara-crud",
+    "description": "A Laravel package to generate CRUD operations for APIs.",
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Ahmed Ebead",
+            "email": "your-email@example.com"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "Ahmed3bead\\LaraCrud\\": "src/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Ahmed3bead\\LaraCrud\\LaraCrudServiceProvider"
+            ]
+        }
+    },
+    "require": {
+        "php": "^8.0|^8.1|8.2",
+        "illuminate/support": "^7.0|^8.0|^9.0|^10.0",
+        "spatie/laravel-query-builder": "^4.0"
+    }
+}

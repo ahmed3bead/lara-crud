@@ -1,0 +1,24 @@
+<?php
+
+namespace {{ DummyNamespace }};
+
+use Ahmed3bead\LaraCrud\BaseClasses\BaseDBSelect;
+
+class {{ DummyClass }}Selector extends BaseDBSelect
+{
+    // Default methods for various contexts
+    public static function listing(): array
+    {
+        return [{{ selectorFields }}];
+    }
+
+    public static function show(): array
+    {
+        return [{{ selectorFields }}];
+    }
+
+    public static function minimum(): array
+    {
+        return [{{ selectorFieldsListing }}];
+    }
+}

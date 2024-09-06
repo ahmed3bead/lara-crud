@@ -1,0 +1,22 @@
+<?php
+namespace {{ DummyNamespace }};
+
+class {{ ModelName }}ShowDTO extends {{ ModelName }}DTO
+{
+{{ ConstructData }}
+//Relations
+        {{ ConstructDataRelations }}
+
+{{ SettersAndGetters }}
+//Relations
+        {{ SettersAndGettersRelations }}
+
+    public function jsonSerialize():array
+    {
+        return [
+            {{ SerializedData }}
+            //Relations
+                    {{ SerializedDataRelations }}
+        ];
+    }
+}

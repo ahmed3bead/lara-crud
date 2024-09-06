@@ -1,0 +1,10 @@
+<?php
+
+use {{ ControllerNameSpace }}\{{ ControllerName }};
+use Illuminate\Support\Facades\Route;
+
+Route::get('', [{{ ControllerName }}::class, 'index']);
+Route::get('/{id}', [{{ ControllerName }}::class, 'show']);
+Route::post('', [{{ ControllerName }}::class, 'create']);
+Route::patch('/{id}', [{{ ControllerName }}::class, 'update']);
+Route::delete('/{id}', [{{ ControllerName }}::class, 'delete']);

@@ -1,0 +1,48 @@
+<?php
+
+namespace {{ DummyNamespace }};
+
+use Ahmed3bead\LaraCrud\BaseClasses\{{ BaseModelName }};
+use Illuminate\Database\Eloquent\SoftDeletes;
+use App\{{ main-container-dir-name }}\{{ class_name_plural_name_space }}\Traits\{{ DummyClass }}RelationsTrait;
+use App\{{ main-container-dir-name }}\{{ class_name_plural_name_space }}\Traits\{{ DummyClass }}FiltersTrait;
+
+class {{ DummyClass }} extends {{ BaseModelName }}
+{
+     use {{ DummyClass }}RelationsTrait,{{ DummyClass }}FiltersTrait;
+     {{ softDeletes }}
+
+    /**
+     * The database table used by the model.
+     *
+     * @var string
+     */
+
+    protected $table = '{{ table }}';
+
+    /**
+     * Attributes that should be mass-assignable.
+     *
+     * @var array
+     */
+
+    protected $fillable = [{{ fillable }}];
+
+    /**
+         * The attributes that should be hidden for serialization.
+         *
+         * @var array<int, string>
+         */
+        protected $hidden = [
+                            {{ hidden }}
+                            ];
+/**
+     * Get the attributes that should be cast.
+     *
+     * @return array<string, string>
+     */
+
+    protected $casts = [
+                        {{ casts }}
+                        ];
+}

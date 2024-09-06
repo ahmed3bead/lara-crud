@@ -1,0 +1,24 @@
+<?php
+namespace {{ DummyNamespace }};
+
+use App\BaseCode\Http\MunjzRequest;
+
+class {{ DummyRequestName }} extends MunjzRequest
+{
+    public function authorize(): bool
+    {
+        return true;
+    }
+
+    public function rules(): array
+    {
+        return [];
+    }
+
+    protected function passedValidation()
+        {
+            parent::passedValidation();
+            // Your Code Here
+
+        }
+}

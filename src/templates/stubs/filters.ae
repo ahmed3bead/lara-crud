@@ -1,0 +1,11 @@
+<?php
+namespace {{ DummyNamespace }};
+
+use App\BaseCode\Filters\AbstractFilter;
+
+class {{ ClassNamePlural }}Filter extends AbstractFilter
+{
+    protected $filters = [
+        // filters Here
+    ];
+}

@@ -1,0 +1,41 @@
+<?php
+namespace {{ DummyNamespace }};
+
+use App\{{ main-container-dir-name }}\{{ class_name_plural_name_space }}\Requests\Create{{ ModelName }}Request;
+use App\{{ main-container-dir-name }}\{{ class_name_plural_name_space }}\Requests\Delete{{ ModelName }}Request;
+use App\{{ main-container-dir-name }}\{{ class_name_plural_name_space }}\Requests\List{{ ModelName }}Request;
+use App\{{ main-container-dir-name }}\{{ class_name_plural_name_space }}\Requests\Update{{ ModelName }}Request;
+use App\{{ main-container-dir-name }}\{{ class_name_plural_name_space }}\Requests\View{{ ModelName }}Request;
+use App\{{ main-container-dir-name }}\{{ class_name_plural_name_space }}\Services\{{ serviceName }};
+use Exception;
+use Ahmed3bead\LaraCrud\BaseClasses\BaseController;
+
+/**
+ * Class {{ ClassNamePlural }}.
+ */
+
+class {{ ClassNamePlural }} extends BaseController
+{
+    /**
+     * @var {{ serviceName }} $service
+     */
+
+    private {{ serviceName }} $service;
+
+    public function __construct({{ serviceName }} $service)
+    {
+        try {
+           parent::__construct($service);
+        } catch (Exception $exception) {
+           throw new Exception($exception->getMessage());
+        }
+    }
+
+      protected array $requestMap = [
+             'delete' => Delete{{ ModelName }}Request::class,
+             'create' => Create{{ ModelName }}Request::class,
+             'index'   => List{{ ModelName }}Request::class,
+             'update' => Update{{ ModelName }}Request::class,
+             'view'   => View{{ ModelName }}Request::class,
+         ];
+}

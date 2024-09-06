@@ -1,0 +1,16 @@
+<?php
+
+namespace {{ DummyNamespace }};
+
+trait {{ TraitName }} {
+
+
+        {{ model-relations }}
+
+
+      public static function getAllowedIncludes(): array
+        {
+            return [{{ model-relations-include }}];
+        }
+
+}

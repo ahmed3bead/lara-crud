@@ -1,0 +1,24 @@
+<?php
+namespace {{ DummyNamespace }};
+
+class  {{ ModelName }}CardViewDTO implements \JsonSerializable
+{
+{{ ConstructDataIndex }}
+
+//Relations
+        {{ ConstructDataRelations }}
+
+{{ SettersAndGettersIndex }}
+
+//Relations
+        {{ SettersAndGettersRelations }}
+
+    public function jsonSerialize():array
+    {
+        return [
+            {{ SerializedDataIndex }}
+            //Relations
+                                {{ SerializedDataRelations }}
+        ];
+    }
+}

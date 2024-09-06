@@ -1,0 +1,110 @@
+<?php
+namespace {{ DummyNamespace }};
+
+use Ahmed3bead\LaraCrud\BaseClasses\BaseDTOMapper;
+use Illuminate\Support\Collection;
+use Ahmed3bead\LaraCrud\BaseClasses\BaseRequest;
+use App\{{ main-container-dir-name }}\{{ class_name_plural_name_space }}\DTOs\{{ ModelName }}DTO;
+use App\{{ main-container-dir-name }}\{{ class_name_plural_name_space }}\DTOs\{{ ModelName }}ShowDTO;
+use App\{{ main-container-dir-name }}\{{ class_name_plural_name_space }}\DTOs\{{ ModelName }}IndexDTO;
+use App\{{ main-container-dir-name }}\{{ class_name_plural_name_space }}\DTOs\{{ ModelName }}CardViewDTO;
+use App\{{ main-container-dir-name }}\{{ class_name_plural_name_space }}\DTOs\{{ ModelName }}ListDTO;
+use App\{{ main-container-dir-name }}\{{ class_name_plural_name_space }}\Models\{{ ModelName }};
+
+class {{ ModelName }}DTOMapper extends BaseDTOMapper
+{
+
+    public function __construct()
+    {
+        parent::__construct(new {{ ModelName }}DTO(),new {{ ModelName }}());
+    }
+
+    public static function fromRequest(BaseRequest $request): {{ ModelName }}DTO
+    {
+        return self::fromArray($request->all());
+    }
+
+    public static function fromArray(array $data): array
+    {
+        return self::fromCollection(collect($data));
+    }
+
+    Public static function fromModelIndex({{ ModelName }} $data)
+    {
+        return self::prepareIndexData(new {{ ModelName }}IndexDTO(), $data);
+    }
+
+    Public static function fromModelCardView({{ ModelName }} $data)
+    {
+        return self::prepareIndexCardData(new {{ ModelName }}CardViewDTO(), $data);
+    }
+
+    Public static function fromModelList({{ ModelName }} $data)
+    {
+        return self::prepareListingData(new {{ ModelName }}ListDTO(), $data);
+    }
+
+    Public static function fromModelShow({{ ModelName }} $data)
+    {
+        return self::prepareData(new {{ ModelName }}ShowDTO(), $data);
+    }
+
+    public static function fromModel($data, $listing = false)
+    {
+        if (request('isIndex')) {
+            $dto = self::prepareIndexData(new  {{ ModelName }}IndexDTO(), $data);
+        }elseif (request('isIndexCard')) {
+            $dto = self::prepareIndexCardData(new  {{ ModelName }}CardViewDTO(), $data);
+        }else{
+             if ($listing) {
+                $dto = self::prepareListingData(new  {{ ModelName }}ListDTO(), $data);
+            } else {
+                $dto = self::prepareData(new {{ ModelName }}DTO(), $data);
+            }
+        }
+
+        return $dto;
+    }
+
+    public static function fromCollection(Collection $data, $listing = false): array
+    {
+        return $data->map(fn($item) => self::fromModel($item, $listing))->toArray();
+    }
+
+    private static function prepareIndexData( {{ ModelName }}IndexDTO $dto, {{ ModelName }} $data)
+     {
+        {{ all_setters_data }}
+
+        return $dto;
+     }
+
+     private static function prepareIndexCardData( {{ ModelName }}CardViewDTO $dto, {{ ModelName }} $data)
+      {
+         {{ all_setters_data }}
+
+        //Relations
+         {{ all_setters_data_of_relations }}
+
+         return $dto;
+      }
+
+     private static function prepareListingData( {{ ModelName }}ListDTO $dto, {{ ModelName }} $data)
+      {
+         {{ all_setters_data }}
+
+         //Relations
+         {{ all_setters_data_of_relations }}
+
+         return $dto;
+      }
+
+    private static function prepareData({{ ModelName }}DTO $dto, {{ ModelName }} $data)
+    {
+        {{ all_setters_data }}
+
+        //Relations
+        {{ all_setters_data_of_relations }}
+
+        return $dto;
+    }
+}

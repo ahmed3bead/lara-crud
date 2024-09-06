@@ -1,0 +1,22 @@
+<?php
+
+namespace {{ DummyNamespace }};
+use Spatie\QueryBuilder\AllowedFilter;
+use Illuminate\Database\Eloquent\Builder;
+use Ahmed3bead\LaraCrud\BaseClasses\KeywordSearchFilter;
+
+trait {{ TraitName }} {
+
+    public static function getAllowedFilters(): array
+    {
+        return [
+
+        {{ model-filters }}
+
+
+        ];
+    }
+
+    {{ model-filters-scopes }}
+
+}

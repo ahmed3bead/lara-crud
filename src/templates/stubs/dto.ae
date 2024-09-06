@@ -1,0 +1,23 @@
+<?php
+
+namespace {{ DummyNamespace }};
+
+class {{ ModelName }}DTO implements \JsonSerializable
+{
+{{ ConstructData }}
+//Relations
+        {{ ConstructDataRelations }}
+
+{{ SettersAndGetters }}
+//Relations
+        {{ SettersAndGettersRelations }}
+
+    public function jsonSerialize():array
+    {
+        return [
+            {{ SerializedData }}
+            //Relations
+                    {{ SerializedDataRelations }}
+        ];
+    }
+}

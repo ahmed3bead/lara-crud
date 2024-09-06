@@ -1,0 +1,23 @@
+<?php
+namespace {{ DummyNamespace }};
+
+use App\{{ main-container-dir-name }}\{{ class_name_plural_name_space }}\Mappers\{{ ModelName }}DTOMapper;
+use App\{{ main-container-dir-name }}\{{ class_name_plural_name_space }}\Models\{{ ModelName }};
+use App\{{ main-container-dir-name }}\{{ class_name_plural_name_space }}\Repositories\{{ ClassNamePlural }}Repository;
+
+use Ahmed3bead\LaraCrud\BaseClasses\BaseService;
+
+class {{ ClassNamePlural }}Service extends BaseService
+{
+    /**
+     * @var {{ ClassNamePlural }}Repository $repository
+     * @var {{ ModelName }}DTOMapper $mapper
+     * AE
+     */
+    private {{ ClassNamePlural }}Repository $repository;
+
+    public function __construct({{ ClassNamePlural }}Repository $repository, {{ ModelName }}DTOMapper $mapper)
+    {
+        parent::__construct($repository, $mapper);
+    }
+}

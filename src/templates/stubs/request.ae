@@ -1,0 +1,24 @@
+<?php
+namespace {{ DummyNamespace }};
+
+use Ahmed3bead\LaraCrud\BaseClasses\BaseRequest;
+
+class {{ DummyRequestName }} extends BaseRequest
+{
+    public function authorize(): bool
+    {
+        return true;
+    }
+
+    public function rules(): array
+    {
+        return [{{ ValidationRules }}];
+    }
+
+    protected function passedValidation()
+        {
+            parent::passedValidation();
+            // Your Code Here
+
+        }
+}
