@@ -1,5 +1,5 @@
 {
-    "name": "ahmed3bead/lara-crud",
+    "name": "ahmedebead/lara-crud",
     "description": "A Laravel package to generate CRUD operations for APIs.",
     "type": "library",
     "license": "MIT",
