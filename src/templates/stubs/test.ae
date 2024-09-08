@@ -1,9 +1,9 @@
 <?php
 
-namespace Tests\Unit\{{ DummyNamespace }};
+namespace {{ DummyNamespace }};
 
 use Tests\TestCase;
-use App\{{ mainContainerDirName }}\{{ classNamePluralNamespace }}\{{ ModelName }};
+use {{ modelClassImport }};
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 class {{ ModelName }}Test extends TestCase
@@ -26,7 +26,7 @@ class {{ ModelName }}Test extends TestCase
             // Add your model attributes here
         ];
 
-        $response = $this->postJson(route('{{ modelNamePlural }}.store'), $data);
+        $response = $this->postJson(route('{{ modelNamePlural }}.create'), $data);
 
         $response->assertStatus(201);
         $this->assertDatabaseHas('{{ tableName }}', $data);

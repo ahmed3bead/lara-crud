@@ -39,12 +39,15 @@ class CrudBlueprint extends Command
                 0
             );
             $this->createDirectories($name);
-            if ($this->confirm('Do you need to create Model and related stuff for {' . $name . '} ?', true)) {
+            if ($this->confirm('Do you need to create Model and related stuff for --> ' . $name . ' ?', true)) {
                 $this->createModel($name, $table, $fields);
             }
 
-            if ($this->confirm('Do you need to create Controller for {' . $name . '} ?', true)) {
+            if ($this->confirm('Do you need to create Controller for --> ' . $name . ' ?', true)) {
                 $this->createController($name, $table);
+            }
+            if ($this->confirm('Do you need to create Unit Test for --> ' . $name . ' ?', true)) {
+                $this->createUnitTest($name, $table, $fields);
             }
             $this->info('All Done');
             $this->warn('Ahmed Ebead');
@@ -114,5 +117,16 @@ class CrudBlueprint extends Command
         }
 
         return rtrim($fieldsString, ';');
+    }
+
+    private function createUnitTest(mixed $name, $table, string $fields)
+    {
+        $namespace_group = $this->option('namespace_group') ?: null;
+        $this->call('crud:unit-test', [
+            'name' => $name,
+            '--table-name' => $table,
+            '--namespace_group' => $namespace_group,
+        ]);
+        $this->info('Unit Test created successfully!');
     }
 }

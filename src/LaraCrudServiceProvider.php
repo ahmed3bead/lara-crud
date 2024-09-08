@@ -2,6 +2,7 @@
 
 namespace Ahmed3bead\LaraCrud;
 
+use Ahmed3bead\LaraCrud\Console\Commands\GenerateUnitTestCommand;
 use Illuminate\Support\ServiceProvider;
 use Ahmed3bead\LaraCrud\Console\Commands\CrudBlueprint;
 use Ahmed3bead\LaraCrud\Console\Commands\CrudBlueprintApiControllerCommand;
@@ -46,6 +47,7 @@ class LaraCrudServiceProvider extends ServiceProvider
                 CrudBlueprintDirsCommand::class,
                 CrudBlueprintExportTableToJson::class,
                 CrudBlueprintModelCommand::class,
+                GenerateUnitTestCommand::class,
             ]);
         }
     }

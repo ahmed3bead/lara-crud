@@ -223,8 +223,8 @@ class CrudBlueprintApiControllerCommand extends GeneratorCommand
 
         ];
         $table = $this->option('table-name') ?: $this->argument('name');
-        $validations = $this->parseFieldsFile($table . '-validations.json');
-        $updateValidations = $this->parseFieldsFile($table . '-update-validations.json');
+        $validations = $this->parseFieldsFile(Str::snake($table),$table . '-validations.json');
+        $updateValidations = $this->parseFieldsFile(Str::snake($table),$table . '-update-validations.json');
 
         foreach ($requstsList as $fun => $requestName) {
 
@@ -245,9 +245,9 @@ class CrudBlueprintApiControllerCommand extends GeneratorCommand
 
     }
 
-    protected function parseFieldsFile($fileName): array
+    protected function parseFieldsFile($table,$fileName): array
     {
-        $filePath = $this->getFieldsPath($fileName) . $fileName;
+        $filePath = $this->getFieldsPath($table) .'/'. $fileName;
         $fields = [];
         if (file_exists($filePath)) {
             $fields = json_decode(file_get_contents($filePath), true);
@@ -275,12 +275,13 @@ EOD;
     public function createRoute($controllerNameSpace, $controllerName, $endpoint)
     {
 
-
+        $table = $this->option('table-name') ?: $this->argument('name');
         $this->curentTemplateName = 'routes';
         $PlaceHolders = [
             '{{ ControllerNameSpace }}' => $controllerNameSpace,
             '{{ main-container-dir-name }}' => $this->configs['dirs']['main-container-dir-name'],
             '{{ ControllerName }}' => $controllerName,
+            '{{ modelNamePlural }}'=>$table
         ];
         $stub = $this->files->get($this->getStub('routes'));
         foreach ($PlaceHolders as $key => $vale) {
