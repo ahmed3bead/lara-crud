@@ -1,0 +1,49 @@
+# Ignore Composer dependencies
+/vendor/
+/composer.lock
+
+# Laravel-specific folders and files (if any are used)
+.env
+/storage/
+bootstrap/cache/
+
+# Node.js dependencies (if applicable)
+/node_modules/
+/npm-debug.log
+/yarn-error.log
+/pnpm-debug.log
+
+# PHPStorm files
+.idea/
+
+# JetBrains specific files
+*.iml
+
+# Ignore compiled assets (if you build any assets)
+public/hot
+public/storage
+public/mix-manifest.json
+public/css/app.css
+public/js/app.js
+
+# Ignore other build or generated files
+/.vscode/
+/build/
+/dist/
+
+# Ignore testing-related artifacts
+phpunit.xml
+.phpunit.result.cache
+tests/_output/
+tests/_support/_generated/
+
+# Ignore OS-specific files
+.DS_Store
+Thumbs.db
+
+# Ignore log files
+*.log
+*.cache
+
+# Ignore editor specific files (e.g., vim swap files)
+*.swp
