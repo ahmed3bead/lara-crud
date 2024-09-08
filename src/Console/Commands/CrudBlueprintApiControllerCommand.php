@@ -304,11 +304,18 @@ EOD;
         $this->createFile($filePath, $stub);
         $routeName = str_replace('_', '-', $name);
         $lineToAdd = "Route::prefix('{$routeName}')->group(function () {include_once 'modules/{$name}.php';});";
+
+        $addThisToMainRoutesFile = "include_once 'Connect/routes.php';";
         $fileContents = File::get($routeFilePath);
+        $mainRoutesFileContents = File::get(base_path('routes' . DIRECTORY_SEPARATOR.'api.php'));
+        if (strpos($mainRoutesFileContents, $addThisToMainRoutesFile) === false) {
+            File::append(base_path('routes' . DIRECTORY_SEPARATOR.'api.php'), PHP_EOL . $addThisToMainRoutesFile . PHP_EOL);
+            $this->info("Route appended successfully, To ".base_path('routes' . DIRECTORY_SEPARATOR.'api.php'));
+        }
         if (strpos($fileContents, $lineToAdd) === false) {
             // Append the line
             File::append($routeFilePath, PHP_EOL . $lineToAdd . PHP_EOL);
-            $this->info("Route appended successfully.");
+            $this->info("Route appended successfully, To ".$routeFilePath);
         } else {
             $this->warn("Route already exists in the file.");
         }
