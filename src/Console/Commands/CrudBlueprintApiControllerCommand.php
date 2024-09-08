@@ -288,24 +288,26 @@ EOD;
         }
         $name = Str::snake($this->argument('name'));
         $routeFilePath = $this->configs['base_route_dir'];
+
         if (!empty($endpoint)) {
             if (!File::exists(base_path('routes' . DIRECTORY_SEPARATOR . $endpoint . DIRECTORY_SEPARATOR . 'modules')))
                 File::makeDirectory(base_path('routes' . DIRECTORY_SEPARATOR . $endpoint . DIRECTORY_SEPARATOR . 'modules'), 0777, true);
             $filePath = base_path('routes' . DIRECTORY_SEPARATOR . $endpoint . DIRECTORY_SEPARATOR . 'modules' . DIRECTORY_SEPARATOR . $name . '.php');
             $routeFilePath.= $endpoint . DIRECTORY_SEPARATOR;
-
+            $addThisToMainRoutesFile = "include_once '{$endpoint}/routes.php';";
         } else {
+
             if (!File::exists(base_path('routes' . DIRECTORY_SEPARATOR . 'modules')))
                 File::makeDirectory(base_path('routes' . DIRECTORY_SEPARATOR . 'modules'), 0777, true);
             $filePath = base_path('routes' . DIRECTORY_SEPARATOR . 'modules' . DIRECTORY_SEPARATOR . $name . '.php');
+            $addThisToMainRoutesFile = "include_once 'routes.php';";
         }
         $routeFilePath.=  $this->configs['base_route_file_name']. '.php';
-
         $this->createFile($filePath, $stub);
         $routeName = str_replace('_', '-', $name);
         $lineToAdd = "Route::prefix('{$routeName}')->group(function () {include_once 'modules/{$name}.php';});";
 
-        $addThisToMainRoutesFile = "include_once 'Connect/routes.php';";
+
         $fileContents = File::get($routeFilePath);
         $mainRoutesFileContents = File::get(base_path('routes' . DIRECTORY_SEPARATOR.'api.php'));
         if (strpos($mainRoutesFileContents, $addThisToMainRoutesFile) === false) {
