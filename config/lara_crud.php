@@ -47,7 +47,7 @@ return [
         'index-resource' => 'index-resource.ae',
 
         // Model templates
-        'models' => 'model.ae',
+        'model' => 'model.ae',
         'selectors' => 'selectors.ae',
         'sup-selectors' => 'sup-selectors.ae',
         'sup-model' => 'sup-model.ae',
@@ -61,7 +61,21 @@ return [
     'base_controller_class' => '',
     'base_selector_class' => '',
     'base_repository_class' => '',
-    'base_Service_class' => '',
+    'base_service_class' => '',
+    'base_dto_class' => '',
+    'base_model_class' => '',
+    'base_policy_class' => '',
+    'base_resource_class' => '',
+    'base_filter_class' => '',
+    'base_request_class' => '',
+    'base_mapper_class' => '',
+    'base_event_class' => '',
+    'base_listener_class' => '',
+    'base_notification_class' => '',
+    'base_scope_class' => '',
+    'base_trait_class' => '',
+    'base_route_dir' => base_path('routes' . DIRECTORY_SEPARATOR),
+    'base_route_file_name' => 'api',
 
     // Directory structure configuration
     'dirs' => [
@@ -93,19 +107,5 @@ return [
             'Traits',
             'Filters',
         ],
-    ],
-
-    // Postman configuration for API documentation
-    'post_man' => [
-        // Enable or disable Postman documentation
-        // API key for Postman
-        'api_key' => '',
-
-        // Main collection ID in Postman
-        'main_collection_id' => '',
-
-        // Separate endpoints configuration
-        'separate_endpoints' => true,
-        'separated_endpoints_list' => [],
     ]
 ];

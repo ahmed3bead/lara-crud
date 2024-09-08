@@ -287,22 +287,24 @@ EOD;
             $stub = $this->findAndReplace($stub, $key, $vale);
         }
         $name = Str::snake($this->argument('name'));
+        $routeFilePath = $this->configs['base_route_dir'];
         if (!empty($endpoint)) {
             if (!File::exists(base_path('routes' . DIRECTORY_SEPARATOR . $endpoint . DIRECTORY_SEPARATOR . 'modules')))
                 File::makeDirectory(base_path('routes' . DIRECTORY_SEPARATOR . $endpoint . DIRECTORY_SEPARATOR . 'modules'), 0777, true);
             $filePath = base_path('routes' . DIRECTORY_SEPARATOR . $endpoint . DIRECTORY_SEPARATOR . 'modules' . DIRECTORY_SEPARATOR . $name . '.php');
+            $routeFilePath.= $endpoint . DIRECTORY_SEPARATOR;
 
         } else {
             if (!File::exists(base_path('routes' . DIRECTORY_SEPARATOR . 'modules')))
                 File::makeDirectory(base_path('routes' . DIRECTORY_SEPARATOR . 'modules'), 0777, true);
             $filePath = base_path('routes' . DIRECTORY_SEPARATOR . 'modules' . DIRECTORY_SEPARATOR . $name . '.php');
         }
+        $routeFilePath.=  $this->configs['base_route_file_name']. '.php';
 
-
+        dd($routeFilePath);
         $this->createFile($filePath, $stub);
         $routeName = str_replace('_', '-', $name);
         $lineToAdd = "Route::prefix('{$routeName}')->group(function () {include_once 'modules/{$name}.php';});";
-        $routeFilePath = base_path('routes' . DIRECTORY_SEPARATOR . 'api.php');
         $fileContents = File::get($routeFilePath);
         if (strpos($fileContents, $lineToAdd) === false) {
             // Append the line
