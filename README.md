@@ -17,7 +17,7 @@ composer require ahmedebead/lara-crud
 To generate CRUD operations, use the following Artisan command. The command will prompt you to enter the database table name associated with the model:
 
 ```bash
-php artisan crud:generate
+php artisan crud:go
 ```
 
 Upon running this command, you will be prompted to enter the database table name associated with the model.
