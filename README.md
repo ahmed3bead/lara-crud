@@ -7,7 +7,7 @@ The **Lara-CRUD** package simplifies the process of creating, reading, updating,
 To install the package via Composer, run the following command:
 
 ```bash
-composer require ahmed3bead/lara-crud
+composer require ahmedebead/lara-crud
 ```
 
 ## How to Use
