@@ -14,7 +14,7 @@ bootstrap/cache/
 /pnpm-debug.log
 
 # PHPStorm files
-.idea/
+.idea/*
 
 # JetBrains specific files
 *.iml

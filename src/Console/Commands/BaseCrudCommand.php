@@ -27,6 +27,12 @@ trait BaseCrudCommand
         return $this->table_name;
     }
 
+    protected function getStub($currentTemplateName = null): string
+    {
+        $templatesArray = config('lara_crud.template-names');
+        return $this->getTemplatePath($templatesArray[$currentTemplateName ?? $this->currentTemplateName]);
+    }
+
     /**
      * @param null $table_name
      */

@@ -1,0 +1,71 @@
+<?php
+
+namespace Tests\Unit\{{ DummyNamespace }};
+
+use Tests\TestCase;
+use App\{{ mainContainerDirName }}\{{ classNamePluralNamespace }}\{{ ModelName }};
+use Illuminate\Foundation\Testing\RefreshDatabase;
+
+class {{ ModelName }}Test extends TestCase
+{
+    use RefreshDatabase;
+
+    /** @test */
+    public function it_can_list_{{ modelNamePlural }}()
+    {
+        $response = $this->getJson(route('{{ modelNamePlural }}.index'));
+
+        $response->assertStatus(200);
+        // Add more assertions as needed
+    }
+
+    /** @test */
+    public function it_can_create_a_{{ modelName }}()
+    {
+        $data = [
+            // Add your model attributes here
+        ];
+
+        $response = $this->postJson(route('{{ modelNamePlural }}.store'), $data);
+
+        $response->assertStatus(201);
+        $this->assertDatabaseHas('{{ tableName }}', $data);
+    }
+
+    /** @test */
+    public function it_can_update_a_{{ modelName }}()
+    {
+        ${{ modelName }} = {{ ModelName }}::factory()->create();
+
+        $data = [
+            // Add your updated model attributes here
+        ];
+
+        $response = $this->patchJson(route('{{ modelNamePlural }}.update', ${{ modelName }}->id), $data);
+
+        $response->assertStatus(200);
+        $this->assertDatabaseHas('{{ tableName }}', $data);
+    }
+
+    /** @test */
+    public function it_can_delete_a_{{ modelName }}()
+    {
+        ${{ modelName }} = {{ ModelName }}::factory()->create();
+
+        $response = $this->deleteJson(route('{{ modelNamePlural }}.destroy', ${{ modelName }}->id));
+
+        $response->assertStatus(200);
+        $this->assertDatabaseMissing('{{ tableName }}', [ 'id' => ${{ modelName }}->id ]);
+    }
+
+    /** @test */
+    public function it_can_show_a_{{ modelName }}()
+    {
+        ${{ modelName }} = {{ ModelName }}::factory()->create();
+
+        $response = $this->getJson(route('{{ modelNamePlural }}.show', ${{ modelName }}->id));
+
+        $response->assertStatus(200);
+        // Add more assertions as needed
+    }
+}

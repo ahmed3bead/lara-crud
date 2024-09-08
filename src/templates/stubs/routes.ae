@@ -3,8 +3,8 @@
 use {{ ControllerNameSpace }}\{{ ControllerName }};
 use Illuminate\Support\Facades\Route;
 
-Route::get('', [{{ ControllerName }}::class, 'index']);
-Route::get('/{id}', [{{ ControllerName }}::class, 'show']);
-Route::post('', [{{ ControllerName }}::class, 'create']);
-Route::patch('/{id}', [{{ ControllerName }}::class, 'update']);
-Route::delete('/{id}', [{{ ControllerName }}::class, 'delete']);
+Route::get('', [{{ ControllerName }}::class, 'index'])->name('{{ modelNamePlural }}.index');
+Route::get('/{id}', [{{ ControllerName }}::class, 'show'])->name('{{ modelNamePlural }}.show');
+Route::post('', [{{ ControllerName }}::class, 'create'])->name('{{ modelNamePlural }}.store');
+Route::patch('/{id}', [{{ ControllerName }}::class, 'update'])->name('{{ modelNamePlural }}.update');
+Route::delete('/{id}', [{{ ControllerName }}::class, 'delete'])->name('{{ modelNamePlural }}.destroy');
