@@ -22,12 +22,25 @@ class BaseController extends Controller
             throw new \Exception('Service not found');
         }
     }
+
+    public function index(FormRequest $request, $perPage = 20)
+    {
+
+        $resolvedRequest = $this->resolveRequest('index', $request);
+        if ($request->has('getAllRecords')) {
+            return $this->getService()->tryAndResponse($this->getService()->all());
+        }
+        return $this->getService()->tryAndResponse($this->getService()->paginate($resolvedRequest));
+
+    }
+
     protected function resolveRequest(string $action, FormRequest $defaultRequest): Request
     {
         try {
             $requestClass = $this->requestMap[$action] ?? get_class($defaultRequest);
             return app($requestClass);
         } catch (\Exception $e) {
+            report($e);
             return $defaultRequest;
         }
     }
@@ -48,26 +61,13 @@ class BaseController extends Controller
         $this->service = $service;
     }
 
-    public function index(FormRequest $request, $perPage = 20)
-    {
-        try {
-            $resolvedRequest = $this->resolveRequest('index', $request);
-            if ($request->has('getAllRecords')) {
-                return $this->getService()->all();
-            }
-            return $this->getService()->paginate($resolvedRequest);
-        } catch (\Exception $e) {
-            return response()->json(['message' => $e->getMessage()], 500);
-        }
-
-    }
-
     public function create(FormRequest $request)
     {
         try {
             $resolvedRequest = $this->resolveRequest('create', $request);
-            return $this->getService()->create($resolvedRequest->all());
+            return $this->getService()->tryAndResponse($this->getService()->create($resolvedRequest->all()));
         } catch (\Exception $e) {
+            report($e);
             return response()->json(['message' => $e->getMessage()], 500);
         }
     }
@@ -76,8 +76,9 @@ class BaseController extends Controller
     {
         try {
             $resolvedRequest = $this->resolveRequest('update', $request);
-            return $this->getService()->update($resolvedRequest->all(), $id);
+            return $this->getService()->tryAndResponse($this->getService()->update($resolvedRequest->all(), $id));
         } catch (\Exception $e) {
+            report($e);
             return response()->json(['message' => $e->getMessage()], 500);
         }
     }
@@ -86,8 +87,9 @@ class BaseController extends Controller
     {
         try {
             $resolvedRequest = $this->resolveRequest('delete', $request);
-            return $this->getService()->delete($id);
+            return $this->getService()->tryAndResponse($this->getService()->delete($id));
         } catch (\Exception $e) {
+            report($e);
             return response()->json(['message' => $e->getMessage()], 500);
         }
     }
@@ -96,9 +98,10 @@ class BaseController extends Controller
     {
         try {
             $resolvedRequest = $this->resolveRequest('show', $request);
-            return $this->getService()->show($id);
+            return $this->getService()->tryAndResponse($this->getService()->show($id));
         } catch (\Exception $e) {
-
+            report($e);
+            return response()->json(['message' => $e->getMessage()], 500);
         }
     }
 }
