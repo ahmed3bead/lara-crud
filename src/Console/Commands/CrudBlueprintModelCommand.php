@@ -181,7 +181,6 @@ EOD;
         }
 
 
-
 //
         if ($endpoint) {
             $_extendsNameSpace_ = str_replace($endpoint, $this->configs['create-main-model-on-endpoint'], $modelNamespace) . '\\' . $modelName;
@@ -205,9 +204,9 @@ EOD;
             $placeHolders['{{ BaseModelName }}'] = "BaseUlidModel";
         }
 
-        if(array_key_exists('deleted_at',$fieldList)){
+        if (array_key_exists('deleted_at', $fieldList)) {
             $placeHolders['{{ softDeletes }}'] = 'use \Illuminate\Database\Eloquent\SoftDeletes;';
-        }else{
+        } else {
             $placeHolders['{{ softDeletes }}'] = '';
         }
         $curentTemplateName = 'model';
@@ -857,7 +856,7 @@ EOD;
         $table = $this->option('table-name') ?: $this->argument('name');
         $fieldList = $this->parseFieldsFile(Str::snake($table));
         $settersAndGetters = $all_setters_data_of_relations = $ConstructDataIndex = $serializedData = $constructData = $all_setters_data = "";
-        $serializedDataRelations = $constructDataRelations = $all_setters_dataRelations = $settersAndGettersRelations = '';
+        $serializedDataRelations = $serializedDataIndex = $settersAndGettersIndex = $all_setters_dataIndex = $constructDataRelations = $all_setters_dataRelations = $settersAndGettersRelations = '';
         $relationData = $this->getRelationsSetters();
 
         if (!empty($fieldList)) {
