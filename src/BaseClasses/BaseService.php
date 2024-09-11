@@ -111,7 +111,7 @@ class BaseService
     {
         return $this->response()
             ->setData(
-                $this->getRepository()->find($id)
+                 $this->getMapper()->fromModel($this->getRepository()->find($id))
             )
             ->setStatusCode(HttpStatus::HTTP_OK);
     }
