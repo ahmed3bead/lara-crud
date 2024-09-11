@@ -26,23 +26,12 @@ class BaseController extends Controller
     public function index(FormRequest $request, $perPage = 20)
     {
 
-        $resolvedRequest = $this->resolveRequest('index', $request);
+        $resolvedRequest = resolve($this->requestMap['index']);
         if ($request->has('getAllRecords')) {
             return $this->getService()->tryAndResponse(fn() =>$this->getService()->all());
         }
         return $this->getService()->tryAndResponse(fn() =>$this->getService()->paginate($resolvedRequest));
 
-    }
-
-    protected function resolveRequest(string $action, FormRequest $defaultRequest): Request
-    {
-        try {
-            $requestClass = $this->requestMap[$action] ?? get_class($defaultRequest);
-            return app($requestClass);
-        } catch (\Exception $e) {
-            report($e);
-            return $defaultRequest;
-        }
     }
 
     /**
@@ -64,7 +53,7 @@ class BaseController extends Controller
     public function create(FormRequest $request)
     {
         try {
-            $resolvedRequest = $this->resolveRequest('create', $request);
+            $resolvedRequest = resolve($this->requestMap['create']);
             return $this->getService()->tryAndResponse(fn() =>$this->getService()->create($resolvedRequest->all()));
         } catch (\Exception $e) {
             report($e);
@@ -75,7 +64,7 @@ class BaseController extends Controller
     public function update(FormRequest $request, $id)
     {
         try {
-            $resolvedRequest = $this->resolveRequest('update', $request);
+            $resolvedRequest = resolve($this->requestMap['update']);
             return $this->getService()->tryAndResponse(fn() =>$this->getService()->update($resolvedRequest->all(), $id));
         } catch (\Exception $e) {
             report($e);
@@ -86,7 +75,7 @@ class BaseController extends Controller
     public function delete(FormRequest $request, $id)
     {
         try {
-            $resolvedRequest = $this->resolveRequest('delete', $request);
+            $resolvedRequest = resolve($this->requestMap['delete']);
             return $this->getService()->tryAndResponse(fn() =>$this->getService()->delete($id));
         } catch (\Exception $e) {
             report($e);
@@ -97,7 +86,7 @@ class BaseController extends Controller
     public function show(FormRequest $request, $id)
     {
         try {
-            $resolvedRequest = $this->resolveRequest('show', $request);
+            $resolvedRequest = resolve($this->requestMap['show']);
             return $this->getService()->tryAndResponse(fn() =>$this->getService()->show($id));
         } catch (\Exception $e) {
             report($e);
