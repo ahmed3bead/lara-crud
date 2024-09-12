@@ -28,9 +28,9 @@ class BaseController extends Controller
 
         $resolvedRequest = resolve($this->requestMap['index']);
         if ($request->has('getAllRecords')) {
-            return $this->getService()->tryAndResponse(fn() =>$this->getService()->all());
+            return $this->getService()->tryAndResponse(fn() => $this->getService()->all());
         }
-        return $this->getService()->tryAndResponse(fn() =>$this->getService()->paginate($resolvedRequest));
+        return $this->getService()->tryAndResponse(fn() => $this->getService()->paginate($resolvedRequest));
 
     }
 
@@ -54,7 +54,7 @@ class BaseController extends Controller
     {
         try {
             $resolvedRequest = resolve($this->requestMap['create']);
-            return $this->getService()->tryAndResponse(fn() =>$this->getService()->create($resolvedRequest->all()));
+            return $this->getService()->tryAndResponse(fn() => $this->getService()->create($resolvedRequest->all()));
         } catch (\Exception $e) {
             report($e);
             return response()->json(['message' => $e->getMessage()], 500);
@@ -65,7 +65,7 @@ class BaseController extends Controller
     {
         try {
             $resolvedRequest = resolve($this->requestMap['update']);
-            return $this->getService()->tryAndResponse(fn() =>$this->getService()->update($resolvedRequest->all(), $id));
+            return $this->getService()->tryAndResponse(fn() => $this->getService()->update($resolvedRequest->all(), $id));
         } catch (\Exception $e) {
             report($e);
             return response()->json(['message' => $e->getMessage()], 500);
@@ -76,7 +76,7 @@ class BaseController extends Controller
     {
         try {
             $resolvedRequest = resolve($this->requestMap['delete']);
-            return $this->getService()->tryAndResponse(fn() =>$this->getService()->delete($id));
+            return $this->getService()->tryAndResponse(fn() => $this->getService()->delete($id));
         } catch (\Exception $e) {
             report($e);
             return response()->json(['message' => $e->getMessage()], 500);
@@ -86,8 +86,9 @@ class BaseController extends Controller
     public function show(FormRequest $request, $id)
     {
         try {
-            $resolvedRequest = resolve($this->requestMap['show']);
-            return $this->getService()->tryAndResponse(fn() =>$this->getService()->show($id));
+            $show = (isset($this->requestMap['show'])) ? $this->requestMap['show'] : $this->requestMap['view'];
+            $resolvedRequest = resolve($show);
+            return $this->getService()->tryAndResponse(fn() => $this->getService()->show($id));
         } catch (\Exception $e) {
             report($e);
             return response()->json(['message' => $e->getMessage()], 500);
