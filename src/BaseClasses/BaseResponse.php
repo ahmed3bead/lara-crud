@@ -6,7 +6,6 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
 use JsonSerializable;
 use stdClass;
-use function Ahmed3bead\LaraCrud\BaseClasses\traits\response;
 
 class BaseResponse implements JsonSerializable
 {
@@ -55,6 +54,7 @@ class BaseResponse implements JsonSerializable
     public function __construct($statusCode = 200, $data = null)
     {
         $this->statusCode = $statusCode;
+        $this->setStatusCode($statusCode);
         $this->data = $data ?? new stdClass();
         $this->errors = new stdClass();
     }
@@ -66,7 +66,7 @@ class BaseResponse implements JsonSerializable
      */
     public function json()
     {
-        return response()->json(
+        return \response()->json(
             [
                 'status_code' => $this->getStatusCode(),
                 'errors' => $this->getErrors() ?? (new stdClass()),
