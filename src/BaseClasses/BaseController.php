@@ -19,7 +19,8 @@ class BaseController extends Controller
         try {
             $this->setService($service);
         } catch (\Exception $e) {
-            throw new \Exception('Service not found');
+            report($e);
+            throw $e;
         }
     }
 
@@ -57,7 +58,7 @@ class BaseController extends Controller
             return $this->getService()->tryAndResponse(fn() => $this->getService()->create($resolvedRequest->all()));
         } catch (\Exception $e) {
             report($e);
-            return response()->json(['message' => $e->getMessage()], 500);
+            throw $e;
         }
     }
 
@@ -68,7 +69,7 @@ class BaseController extends Controller
             return $this->getService()->tryAndResponse(fn() => $this->getService()->update($resolvedRequest->all(), $id));
         } catch (\Exception $e) {
             report($e);
-            return response()->json(['message' => $e->getMessage()], 500);
+            throw $e;
         }
     }
 
@@ -79,7 +80,7 @@ class BaseController extends Controller
             return $this->getService()->tryAndResponse(fn() => $this->getService()->delete($id));
         } catch (\Exception $e) {
             report($e);
-            return response()->json(['message' => $e->getMessage()], 500);
+            throw $e;
         }
     }
 
@@ -91,7 +92,7 @@ class BaseController extends Controller
             return $this->getService()->tryAndResponse(fn() => $this->getService()->show($id));
         } catch (\Exception $e) {
             report($e);
-            return response()->json(['message' => $e->getMessage()], 500);
+            throw $e;
         }
     }
 }
