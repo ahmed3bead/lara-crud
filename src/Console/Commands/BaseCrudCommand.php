@@ -55,17 +55,49 @@ trait BaseCrudCommand
 
     protected function getTableNameFromUser()
     {
-        $tableName = $this->ask('Do you want to provide a table name? Leave blank to select from list.');
-        if ($tableName) {
-            $this->setTableName($tableName);
-            return $tableName;
-        } else {
-            $tableName = $this->choice('Select the table name:', $this->getUserTableNames());
-            $this->setTableName($tableName);
+        $name = $this->option('table-name');
+
+        if (!$name) {
+            try {
+                // Get all tables using a more compatible approach
+                $tables = [];
+
+                if (config('database.default') === 'sqlite') {
+                    $tables = \DB::select("SELECT name FROM sqlite_master WHERE type='table' ORDER BY name;");
+                    $tables = array_map(function($table) {
+                        return $table->name;
+                    }, $tables);
+                } else {
+                    // For MySQL, PostgreSQL, etc.
+                    $tables = \DB::select('SHOW TABLES');
+                    $tables = array_map(function($table) {
+                        $table = (array) $table;
+                        return reset($table); // Get first value regardless of the key name
+                    }, $tables);
+                }
+
+                // Filter out system tables
+                $tables = array_filter($tables, function($table) {
+                    return !in_array($table, ['migrations', 'password_reset_tokens', 'personal_access_tokens', 'failed_jobs']);
+                });
+
+                if (empty($tables)) {
+                    $this->error('No tables found in the database. Create tables first or specify a table name manually.');
+                    return null;
+                }
+
+                $name = $this->choice(
+                    'Do you want to provide a table name? Leave blank to select from list.',
+                    $tables,
+                    0
+                );
+            } catch (\Exception $e) {
+                $this->error('Error accessing database schema. Please provide a table name manually.');
+                $name = $this->ask('What is the name of the table?');
+            }
         }
 
-
-        return $tableName;
+        return ucfirst(Str::camel(Str::singular($name)));
     }
 
     protected function getUserTableNames()
