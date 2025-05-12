@@ -52,6 +52,20 @@ trait BaseCrudCommand
         $this->configs = $configs;
     }
 
+    /**
+     * Validate database connection
+     */
+    protected function validateDatabaseConnection()
+    {
+        try {
+            // Test the connection
+            \DB::connection()->getPdo();
+            return true;
+        } catch (\Exception $e) {
+            $this->error('Database connection failed: ' . $e->getMessage());
+            return false;
+        }
+    }
 
     protected function getTableNameFromUser()
     {
@@ -87,12 +101,12 @@ trait BaseCrudCommand
                 }
 
                 $name = $this->choice(
-                    'Do you want to provide a table name? Leave blank to select from list.',
+                    'Select a table:',
                     $tables,
                     0
                 );
             } catch (\Exception $e) {
-                $this->error('Error accessing database schema. Please provide a table name manually.');
+                $this->error('Error accessing database schema: ' . $e->getMessage());
                 $name = $this->ask('What is the name of the table?');
             }
         }
@@ -102,13 +116,35 @@ trait BaseCrudCommand
 
     protected function getUserTableNames()
     {
-        $allTables = DB::connection()->getDoctrineSchemaManager()->listTableNames();
+        try {
+            // Try to get tables using PDO instead of Doctrine
+            $tables = [];
+            $connection = DB::connection();
 
-        $laravelTables = ['migrations', 'password_resets', 'failed_jobs', 'personal_access_tokens'];
+            if (config('database.default') === 'sqlite') {
+                $tables = $connection->select("SELECT name FROM sqlite_master WHERE type='table' ORDER BY name;");
+                $tables = array_map(function($table) {
+                    return $table->name;
+                }, $tables);
+            } else {
+                // For MySQL, PostgreSQL, etc.
+                $tables = $connection->select('SHOW TABLES');
+                $tables = array_map(function($table) {
+                    $table = (array) $table;
+                    return reset($table); // Get first value regardless of the key name
+                }, $tables);
+            }
 
-        return array_filter($allTables, function ($table) use ($laravelTables) {
-            return !in_array($table, $laravelTables);
-        });
+            $laravelTables = ['migrations', 'password_resets', 'failed_jobs', 'personal_access_tokens'];
+
+            return array_filter($tables, function ($table) use ($laravelTables) {
+                return !in_array($table, $laravelTables);
+            });
+        } catch (\Exception $e) {
+            $this->error('Error getting table names: ' . $e->getMessage());
+            // Return empty array as fallback
+            return [];
+        }
     }
 
     protected function getTemplatePath($templateName)
@@ -135,23 +171,27 @@ trait BaseCrudCommand
         return file_exists($controllerPath) ? $controllerPath : $defaultControllerPath;
     }
 
-//    protected function getTableName($name)
-//    {
-//        $migrationName = Str::plural(Str::snake($name));
-//        return $this->option('table-name') ?: $migrationName;
-//    }
-
     protected function validateTableOrFieldsFile($table)
     {
-        $fieldsFilesPath = $this->getFieldsPath($table);
-        if (!$this->tableOrFieldsFileExists($table, $fieldsFilesPath)) {
+        try {
+            $fieldsFilesPath = $this->getFieldsPath($table);
+
+            // Check if table exists in the database or fields file exists
+            if (!$this->tableOrFieldsFileExists($table, $fieldsFilesPath)) {
+                return false;
+            }
+
+            // Try to connect to the database
+            if ($this->validateDatabaseConnection()) {
+                return $this->handleDatabaseConnection($table, $fieldsFilesPath);
+            }
+
+            // If database connection fails, try to use the fields file
+            return $this->handleNoDatabaseConnection($fieldsFilesPath, $table);
+        } catch (\Exception $e) {
+            $this->error('Error validating table or fields file: ' . $e->getMessage());
             return false;
         }
-        if (DB::connection()->getDatabaseName()) {
-            return $this->handleDatabaseConnection($table, $fieldsFilesPath);
-        }
-
-        return $this->handleNoDatabaseConnection($fieldsFilesPath, $table);
     }
 
     protected function getFieldsPath($table)
@@ -165,17 +205,31 @@ trait BaseCrudCommand
 
     private function tableOrFieldsFileExists($table, $fieldsFilesPath)
     {
-        if (!Schema::hasTable($table) && !file_exists($fieldsFilesPath)) {
-            $this->error("Table {$table} does not exist and fields file not exist, please create DB table or create fields file on this path " . $fieldsFilesPath);
-            return false;
+        try {
+            $tableExists = Schema::hasTable($table);
+            $fileExists = file_exists($fieldsFilesPath . '/' . $table . '.json');
+
+            if (!$tableExists && !$fileExists) {
+                $this->error("Table {$table} does not exist and fields file not exist, please create DB table or create fields file on this path " . $fieldsFilesPath);
+                return false;
+            }
+            return true;
+        } catch (\Exception $e) {
+            // If we can't check if the table exists, just check if the file exists
+            $fileExists = file_exists($fieldsFilesPath . '/' . $table . '.json');
+            if (!$fileExists) {
+                $this->error("Fields file not found for table {$table}. Expected at: " . $fieldsFilesPath . '/' . $table . '.json');
+                return false;
+            }
+            return true;
         }
-        return true;
     }
 
     private function handleDatabaseConnection($table, $fieldsFilesPath)
     {
+        $fieldsFile = $fieldsFilesPath . '/' . $table . '.json';
 
-        if (file_exists($fieldsFilesPath . '/' . $table . '.json')) {
+        if (file_exists($fieldsFile)) {
             if ($this->confirm('{' . $table . '} module fields file exists, this will override, do you wish to continue?')) {
                 $this->info('Convert DB Table To JSON');
                 $this->call('crud:export-table', ['table' => $table]);
@@ -189,14 +243,20 @@ trait BaseCrudCommand
 
     private function handleNoDatabaseConnection($fieldsFilesPath, $table)
     {
-        if (file_exists($fieldsFilesPath)) {
+        $fieldsFile = $fieldsFilesPath . '/' . $table . '.json';
+
+        if (file_exists($fieldsFile)) {
             $this->info('Cannot connect to DB, we will use JSON file');
-            $this->call('crud:export-table', ['table' => $table]);
+            return true;
         } else {
-            $this->error('Cannot connect to DB and no JSON file found');
+            $this->error('Cannot connect to DB and no JSON file found at: ' . $fieldsFile);
+
+            if ($this->confirm('Do you want to continue without database schema information?', true)) {
+                return true;
+            }
+
             return false;
         }
-        return true;
     }
 
     /**
@@ -222,11 +282,56 @@ trait BaseCrudCommand
         } else {
             $this->info("Directory already exists: {$path}");
         }
-
     }
 
     protected function getDirsList(): array
     {
         return empty(config('lara_crud.dirs')) ? [] : config('lara_crud.dirs');
+    }
+
+    /**
+     * Check if AdminLTE package is installed
+     */
+    protected function isAdminLTEInstalled()
+    {
+        return class_exists('\JeroenNoten\LaravelAdminLte\AdminLteServiceProvider');
+    }
+
+    /**
+     * Install AdminLTE package
+     */
+    protected function installAdminLTE()
+    {
+        $this->info('Installing AdminLTE package...');
+
+        // Use composer to require the package
+        $this->info('Running: composer require jeroennoten/laravel-adminlte');
+        exec('composer require jeroennoten/laravel-adminlte');
+
+        // Install AdminLTE
+        $this->info('Running: php artisan adminlte:install');
+        \Artisan::call('adminlte:install');
+        $this->info(\Artisan::output());
+
+        $this->info('AdminLTE installed successfully!');
+    }
+
+    /**
+     * Generate web routes for the model
+     */
+    protected function generateWebRoutes($name)
+    {
+        $routeName = Str::kebab(Str::plural($name));
+        $controllerName = "{$name}Controller";
+
+        $routeContent = "\nRoute::resource('{$routeName}', App\\Http\\Controllers\\{$controllerName}::class);";
+
+        $webRoutesPath = base_path('routes/web.php');
+        $currentRoutes = file_get_contents($webRoutesPath);
+
+        if (!str_contains($currentRoutes, $routeContent)) {
+            file_put_contents($webRoutesPath, $currentRoutes . $routeContent);
+            $this->info("Web routes added to routes/web.php");
+        }
     }
 }

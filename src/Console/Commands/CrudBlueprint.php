@@ -4,6 +4,7 @@ namespace Ahmed3bead\LaraCrud\Console\Commands;
 
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Str;
 use Ahmed3bead\LaraCrud\Generators\ViewGenerator;
 use Ahmed3bead\LaraCrud\Generators\WebControllerGenerator;
 
@@ -28,20 +29,33 @@ class CrudBlueprint extends Command
 
     public function handle()
     {
-
         try {
+            // Validate database connection
+            if (!$this->validateDatabaseConnection() &&
+                !$this->confirm('Database connection failed. Continue without database schema information?', true)) {
+                return 1;
+            }
+
             $name = $this->getTableNameFromUser();
+            if (!$name) {
+                return 1;
+            }
+
             $table = $this->getTableName();
             $fields = rtrim($this->option('fields'), ';');
+
             if (!$this->validateTableOrFieldsFile($table)) {
                 return 1;
             }
+
             $type = $this->choice(
                 'Select type of files to generate:',
                 ['Api', 'Web', 'both'],
                 0
             );
+
             $this->createDirectories($name);
+
             if ($this->confirm('Do you need to create Model and related stuff for --> ' . $name . ' ?', true)) {
                 $this->createModel($name, $table, $fields);
             }
@@ -67,6 +81,7 @@ class CrudBlueprint extends Command
             if ($this->confirm('Do you need to create Unit Test for --> ' . $name . ' ?', true)) {
                 $this->createUnitTest($name, $table, $fields);
             }
+
             $this->info('All Done');
             $this->warn('Ahmed Ebead');
         } catch (\Exception $e) {
@@ -75,13 +90,55 @@ class CrudBlueprint extends Command
                 'line' => $e->getLine(),
                 'file' => $e->getFile(),
             ];
-            throw new \Exception(json_encode($error));
+            dd($error);
         }
 
-        return 1;
+        return 0;
     }
 
-    // Existing methods...
+    private function createDirectories($name)
+    {
+        $namespace_group = $this->option('namespace_group') ?: null;
+        $this->call('crud:dirs', ['name' => $name, '--namespace_group' => $namespace_group]);
+        $this->info('Directories created successfully!');
+    }
+
+    private function createModel($name, $table, $fields)
+    {
+        $namespace_group = $this->option('namespace_group') ?: null;
+        $fieldsArray = explode(';', $fields);
+        $fillableArray = [];
+
+        foreach ($fieldsArray as $item) {
+            if (empty(trim($item))) continue;
+            $spareParts = explode('#', trim($item));
+            $fillableArray[] = $spareParts[0];
+        }
+
+        $fillable = "['" . implode("', '", $fillableArray) . "']";
+        $primaryKey = $this->option('pk');
+
+        $this->call('crud:model', [
+            'name' => $name,
+            '--fillable' => $fillable,
+            '--table-name' => $table,
+            '--pk' => $primaryKey,
+            '--namespace_group' => $namespace_group,
+        ]);
+
+        $this->info('Model and related stuff created successfully!');
+    }
+
+    private function createController($name, $table)
+    {
+        $namespace_group = $this->option('namespace_group') ?: null;
+        $this->call('crud:api-controller', [
+            'name' => $name,
+            '--table-name' => $table,
+            '--namespace_group' => $namespace_group,
+        ]);
+        $this->info('API Controller created successfully!');
+    }
 
     /**
      * Create views for the model with the specified UI framework
@@ -152,49 +209,27 @@ class CrudBlueprint extends Command
         $this->info('Bootstrap views generated successfully!');
     }
 
-    /**
-     * Check if AdminLTE package is installed
-     */
-    private function isAdminLTEInstalled()
+    protected function processJSONFields($file)
     {
-        return class_exists('\JeroenNoten\LaravelAdminLte\AdminLteServiceProvider');
-    }
+        $json = File::get($file);
+        $fields = json_decode($json);
 
-    /**
-     * Install AdminLTE package
-     */
-    private function installAdminLTE()
-    {
-        $this->info('Installing AdminLTE package...');
-
-        // Use composer to require the package
-        $this->info('Running: composer require jeroennoten/laravel-adminlte');
-        exec('composer require jeroennoten/laravel-adminlte');
-
-        // Install AdminLTE
-        $this->info('Running: php artisan adminlte:install');
-        \Artisan::call('adminlte:install');
-        $this->info(\Artisan::output());
-
-        $this->info('AdminLTE installed successfully!');
-    }
-
-    /**
-     * Generate web routes for the model
-     */
-    private function generateWebRoutes($name)
-    {
-        $routeName = \Illuminate\Support\Str::kebab(\Illuminate\Support\Str::plural($name));
-        $controllerName = "{$name}Controller";
-
-        $routeContent = "\nRoute::resource('{$routeName}', App\\Http\\Controllers\\{$controllerName}::class);";
-
-        $webRoutesPath = base_path('routes/web.php');
-        $currentRoutes = file_get_contents($webRoutesPath);
-
-        if (!str_contains($currentRoutes, $routeContent)) {
-            file_put_contents($webRoutesPath, $currentRoutes . $routeContent);
-            $this->info("Web routes added to routes/web.php");
+        $fieldsString = '';
+        foreach ($fields->fields as $field) {
+            $fieldsString .= $field->name . '#' . $field->type . ';';
         }
+
+        return rtrim($fieldsString, ';');
+    }
+
+    private function createUnitTest(mixed $name, $table, string $fields)
+    {
+        $namespace_group = $this->option('namespace_group') ?: null;
+        $this->call('crud:unit-test', [
+            'name' => $name,
+            '--table-name' => $table,
+            '--namespace_group' => $namespace_group,
+        ]);
+        $this->info('Unit Test created successfully!');
     }
 }
