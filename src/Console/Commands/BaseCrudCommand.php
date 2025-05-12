@@ -105,13 +105,14 @@ trait BaseCrudCommand
                     $tables,
                     0
                 );
+
             } catch (\Exception $e) {
                 $this->error('Error accessing database schema: ' . $e->getMessage());
                 $name = $this->ask('What is the name of the table?');
             }
         }
 
-        return ucfirst(Str::camel(Str::singular($name)));
+        return $name;
     }
 
     protected function getUserTableNames()
@@ -307,12 +308,13 @@ trait BaseCrudCommand
         // Use composer to require the package
         $this->info('Running: composer require jeroennoten/laravel-adminlte');
         exec('composer require jeroennoten/laravel-adminlte');
-
+        sleep(3);
         // Install AdminLTE
-        $this->info('Running: php artisan adminlte:install');
         \Artisan::call('adminlte:install');
         $this->info(\Artisan::output());
 
+        $this->info('You need to Run: php artisan adminlte:install to compile your fresh scaffolding.');;
+        $this->info('You need to Run: npm install && npm run dev to compile your fresh scaffolding.');
         $this->info('AdminLTE installed successfully!');
     }
 

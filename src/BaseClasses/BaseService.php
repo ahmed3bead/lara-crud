@@ -10,25 +10,28 @@ use Spatie\QueryBuilder\QueryBuilder;
 class BaseService
 {
     use ServiceTrait;
+
     private mixed $repository;
     private mixed $mapper;
 
-    public function __construct($repository,$mapper)
+    public function __construct($repository, $mapper)
     {
         $this->setRepository($repository);
         $this->setMapper($mapper);
     }
 
-    public function getMapper(): mixed
+    public function webPaginate($request)
     {
-        return $this->mapper;
+        if ($request->has('listing')) {
+            return $this->getRepository()->minimalListWithFilter();
+        } else {
+            $data = $this->getRepository()->paginate(
+                $request->query(),
+                $request->query('perPage')
+            );
+            return $data;
+        }
     }
-
-    public function setMapper(mixed $mapper): void
-    {
-        $this->mapper = $mapper;
-    }
-
 
     /**
      * @return mixed
@@ -46,11 +49,6 @@ class BaseService
         $this->repository = $repository;
     }
 
-//    public function paginate($requestQuery, $perPage = 20)
-//    {
-//        return $this->getRepository()->paginate($requestQuery, $perPage);
-//    }
-
     public function paginate($request)
     {
         $response = $this->response();
@@ -63,18 +61,29 @@ class BaseService
                 $request->query(),
                 $request->query('perPage')
             );
-            $data =  $this->getMapper()->fromPaginator($data);
+            $data = $this->getMapper()->fromPaginator($data);
             return $response->setData($data['items'])->setMeta($data['meta'])->setStatusCode(HttpStatus::HTTP_OK);
         }
     }
 
-    public function all()
+//    public function paginate($requestQuery, $perPage = 20)
+//    {
+//        return $this->getRepository()->paginate($requestQuery, $perPage);
+//    }
+
+    public function getMapper(): mixed
     {
-        return $this->response()
-            ->setData(
-                $this->getMapper()->fromCollection($this->getRepository()->all())
-            )
-            ->setStatusCode(HttpStatus::HTTP_OK);
+        return $this->mapper;
+    }
+
+    public function setMapper(mixed $mapper): void
+    {
+        $this->mapper = $mapper;
+    }
+
+    public function webCreate($data)
+    {
+        return $this->getRepository()->create($data);
     }
 
     public function create($data)
@@ -86,12 +95,18 @@ class BaseService
             ->setStatusCode(HttpStatus::HTTP_OK);
     }
 
+    public function webUpdate($data, $id)
+    {
+        $model = $this->getRepository()->find($id);
+        return $this->getRepository()->update($model, $data);
+    }
+
     public function update($data, $id)
     {
         $model = $this->getRepository()->find($id);
         return $this->response()
             ->setData(
-                $this->getMapper()->fromModel($this->getRepository()->update($model,$data))
+                $this->getMapper()->fromModel($this->getRepository()->update($model, $data))
             )
             ->setStatusCode(HttpStatus::HTTP_OK);
     }
@@ -107,13 +122,24 @@ class BaseService
             ->setStatusCode(HttpStatus::HTTP_DELETED);
     }
 
+    public function webDelete($id)
+    {
+        $model = $this->getRepository()->find($id);
+        return $this->getRepository()->delete($model);
+    }
+
     public function show($id)
     {
         return $this->response()
             ->setData(
-                 $this->getMapper()->fromModel($this->getRepository()->find($id))
+                $this->getMapper()->fromModel($this->getRepository()->find($id))
             )
             ->setStatusCode(HttpStatus::HTTP_OK);
+    }
+
+    public function webShow($id)
+    {
+        return $this->getRepository()->find($id);
     }
 
     public function getGroupedListedData(array $modelConfig): array
@@ -167,14 +193,6 @@ class BaseService
         }
     }
 
-    private function processNonGroupedItems($items, $groupField, $labelField, $extraFields, &$data)
-    {
-        $data[] = [
-            'label' => $groupField,
-            'items' => $this->prepareItemsData($items, $labelField, $extraFields),
-        ];
-    }
-
     /**
      * @param mixed $groupItems
      * @param mixed $labelField
@@ -196,6 +214,28 @@ class BaseService
 
             return $return;
         })->values()->all();
+    }
+
+    public function all()
+    {
+        return $this->response()
+            ->setData(
+                $this->getMapper()->fromCollection($this->getRepository()->all())
+            )
+            ->setStatusCode(HttpStatus::HTTP_OK);
+    }
+
+    public function webAll()
+    {
+        return $this->getMapper()->fromCollection($this->getRepository()->all());
+    }
+
+    private function processNonGroupedItems($items, $groupField, $labelField, $extraFields, &$data)
+    {
+        $data[] = [
+            'label' => $groupField,
+            'items' => $this->prepareItemsData($items, $labelField, $extraFields),
+        ];
     }
 
 }

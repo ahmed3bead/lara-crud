@@ -1,103 +1,42 @@
 <?php
+namespace {{ DummyNamespace }};
 
-namespace {{namespace}};
-
-use {{modelNamespace}}\{{modelName}};
+use App\{{ main-container-dir-name }}\{{ class_name_plural_name_space }}\Requests\Create{{ ModelName }}Request;
+use App\{{ main-container-dir-name }}\{{ class_name_plural_name_space }}\Requests\Delete{{ ModelName }}Request;
+use App\{{ main-container-dir-name }}\{{ class_name_plural_name_space }}\Requests\List{{ ModelName }}Request;
+use App\{{ main-container-dir-name }}\{{ class_name_plural_name_space }}\Requests\Update{{ ModelName }}Request;
+use App\{{ main-container-dir-name }}\{{ class_name_plural_name_space }}\Requests\View{{ ModelName }}Request;
+use App\{{ main-container-dir-name }}\{{ class_name_plural_name_space }}\Services\{{ serviceName }};
+use Ahmed3bead\LaraCrud\BaseClasses\BaseWebController;
+use Exception;
 use Illuminate\Http\Request;
 
-class {{controllerName}} extends Controller
+/**
+ * Class {{ ClassNamePlural }}.
+ */
+class {{ ClassNamePlural }} extends BaseWebController
 {
     /**
-     * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
+     * @var {{ serviceName }} $service
      */
-    public function index()
+    private {{ serviceName }} $service;
+
+    public function __construct({{ serviceName }} $service)
     {
-        ${{modelVariablePlural}} = {{modelName}}::paginate(10);
-        return view('{{routePrefix}}.index', compact('{{modelVariablePlural}}'));
+        try {
+           parent::__construct($service);
+        } catch (Exception $exception) {
+           throw new Exception($exception->getMessage());
+        }
     }
 
-    /**
-     * Show the form for creating a new resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function create()
-    {
-        return view('{{routePrefix}}.create');
-    }
+    protected array $requestMap = [
+        'delete' => Delete{{ ModelName }}Request::class,
+        'create' => Create{{ ModelName }}Request::class,
+        'index'  => List{{ ModelName }}Request::class,
+        'update' => Update{{ ModelName }}Request::class,
+        'view'   => View{{ ModelName }}Request::class,
+    ];
 
-    /**
-     * Store a newly created resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
-     */
-    public function store(Request $request)
-    {
-        $validated = $request->validate([
-            // Add validation rules here
-        ]);
-
-        {{modelName}}::create($request->all());
-
-        return redirect()->route('{{routePrefix}}.index')
-            ->with('success', '{{modelName}} created successfully');
-    }
-
-    /**
-     * Display the specified resource.
-     *
-     * @param  {{modelName}}  ${{modelVariable}}
-     * @return \Illuminate\Http\Response
-     */
-    public function show({{modelName}} ${{modelVariable}})
-    {
-        return view('{{routePrefix}}.show', compact('{{modelVariable}}'));
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     *
-     * @param  {{modelName}}  ${{modelVariable}}
-     * @return \Illuminate\Http\Response
-     */
-    public function edit({{modelName}} ${{modelVariable}})
-    {
-        return view('{{routePrefix}}.edit', compact('{{modelVariable}}'));
-    }
-
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  {{modelName}}  ${{modelVariable}}
-     * @return \Illuminate\Http\Response
-     */
-    public function update(Request $request, {{modelName}} ${{modelVariable}})
-    {
-        $validated = $request->validate([
-            // Add validation rules here
-        ]);
-
-        ${{modelVariable}}->update($request->all());
-
-        return redirect()->route('{{routePrefix}}.index')
-            ->with('success', '{{modelName}} updated successfully');
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param  {{modelName}}  ${{modelVariable}}
-     * @return \Illuminate\Http\Response
-     */
-    public function destroy({{modelName}} ${{modelVariable}})
-    {
-        ${{modelVariable}}->delete();
-
-        return redirect()->route('{{routePrefix}}.index')
-            ->with('success', '{{modelName}} deleted successfully');
-    }
+    protected $viewPrefix = '{{ routePrefix }}';
 }

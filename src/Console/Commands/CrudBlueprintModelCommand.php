@@ -234,51 +234,74 @@ EOD;
             $this->error('Fields file not found: ' . $filePath);
             return [];
         }
-        $fields = [];
-        if (file_exists($filePath)) {
-            $fields = json_decode(file_get_contents($filePath), true);
-        }
 
-        return $fields;
+        try {
+            $jsonContent = file_get_contents($filePath);
+            $fields = json_decode($jsonContent, true);
+
+            // Check if the JSON structure is what we expect
+            if (is_array($fields) && isset($fields['fields']) && is_array($fields['fields'])) {
+                // Return the fields array in the expected format
+                $result = [];
+                foreach ($fields['fields'] as $field) {
+                    if (isset($field['name'])) {
+                        $result[$field['name']] = [
+                            'type' => $field['type'] ?? 'string',
+                            'fillable' => $field['fillable'] ?? true,
+                            'setterAndGetter' => $field['setterAndGetter'] ?? true,
+                            'nullable' => $field['nullable'] ?? false,
+                            'hidden' => $field['hidden'] ?? false,
+                        ];
+                    }
+                }
+                return $result;
+            } else {
+                $this->warn('Invalid JSON structure in fields file: ' . $filePath);
+                return [];
+            }
+        } catch (\Exception $e) {
+            $this->error('Error parsing fields file: ' . $e->getMessage());
+            return [];
+        }
     }
 
     protected function generateFillable($fieldList)
     {
         $fillableArray = [];
-        foreach ($fieldList as $k => $fieldData) {
-            if ($fieldData['fillable']) {
-                $fillableArray[] = $k;
+        foreach ($fieldList as $field => $fieldData) {
+            if (isset($fieldData['fillable']) && $fieldData['fillable']) {
+                $fillableArray[] = $field;
             }
         }
 
         $fillableArray = "'" . implode(',', $fillableArray) . "'";
-
         return str_replace(',', "','", $fillableArray);
     }
 
     protected function generateCasts($fieldList)
     {
-
         $content = "";
-        foreach ($fieldList as $k => $fieldData) {
+        foreach ($fieldList as $field => $fieldData) {
             $temp = "";
-            if ($fieldData['type'] == "\DateTime") {
-                $temp = <<<EOD
-'{$k}'=>'datetime',
+            if (isset($fieldData['type'])) {
+                if ($fieldData['type'] == "\DateTime" || $fieldData['type'] == "DateTime") {
+                    $temp = <<<EOD
+'{$field}'=>'datetime',
 
 EOD;
-            } elseif ($fieldData['type'] == "boolean") {
-                $temp = <<<EOD
-'{$k}'=>'boolean',
+                } elseif ($fieldData['type'] == "boolean" || $fieldData['type'] == "bool") {
+                    $temp = <<<EOD
+'{$field}'=>'boolean',
 
 EOD;
-            } elseif ($fieldData['type'] == "array") {
-                $temp = <<<EOD
-'{$k}'=>'array',
+                } elseif ($fieldData['type'] == "array") {
+                    $temp = <<<EOD
+'{$field}'=>'array',
 
 EOD;
+                }
+                $content .= $temp;
             }
-            $content .= $temp;
         }
 
         return preg_replace('/{nbr}[\r\n]+/', '', $content);
@@ -538,7 +561,7 @@ EOD;
     protected function generateSelector($namespace_group = null, $endpoint = null, $is_sub_model = false)
     {
         $name = Str::studly($this->argument('name'));
-        $table = $this->option('table-name') ?: $name;
+        $table = $this->option('table-name') ?: $this->argument('name');
 
         $modelName = ucfirst(Str::singular($name));
         $containerDirName = 'App\\' . $this->configs['dirs']['main-container-dir-name'];
@@ -555,13 +578,13 @@ EOD;
         }
 
         $modelNamespace = $containerDirName . '\\' . $name . '\\' . 'Selectors';
-        $fieldList = $this->parseFieldsFile(Str::snake($name));
+        $fieldList = $this->parseFieldsFile(Str::snake($table));
+
         $selectorFields = $selectorFieldsListing = "";
         if (!empty($fieldList)) {
             $selectorFields = $this->generateSelectorFields(fieldList: $fieldList, table: $table);
             $selectorFieldsListing = $this->generateSelectorFields(fieldList: $fieldList, table: $table, isListing: true);
         }
-
         $placeHolders = ['{{ DummyNamespace }}' => $modelNamespace, '{{ selectorFields }}' => $selectorFields, '{{ selectorFieldsListing }}' => $selectorFieldsListing, '{{ main-container-dir-name }}' => $this->configs['dirs']['main-container-dir-name'], '{{ DummyClass }}' => $modelName];
         $stub = $this->files->get($this->getStub('selectors'));
         foreach ($placeHolders as $key => $vale) {
@@ -581,11 +604,10 @@ EOD;
         $listingAllowedFields = ['id', 'name', 'title', 'email'];
         foreach ($fieldList as $k => $fieldData) {
             if ($isListing && !in_array($k, $listingAllowedFields)) continue;
-            if ($fieldData['fillable']) {
+            if ($fieldData['fillable'] || $k == 'id') {
                 $fillableArray[] = $table . '.' . $k;
             }
         }
-
         $fillableArray = "'" . implode(',', $fillableArray) . "'";
 
         return str_replace(',', "','", $fillableArray);
@@ -838,13 +860,15 @@ EOD;
 
     protected function generateRelationsInclude($relations)
     {
-        $modelContent = "\n";
+        $modelContent = "";
         foreach ($relations as $k => $relation) {
+            $modelContent = "\n";
             $modelContent .= '"' . lcfirst($relation['relatedTable']) . '"';
             $modelContent .= ',"mini' . ucfirst($relation['relatedTable']) . '"';
             if (isset($relations[$k + 1])) $modelContent .= ",\n";
         }
-        $modelContent .= ",\n";
+        if (!empty($modelContent))
+            $modelContent .= ",\n";
 
         return $modelContent;
     }

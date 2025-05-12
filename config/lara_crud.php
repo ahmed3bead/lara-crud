@@ -6,6 +6,7 @@ return [
 
     // Enable or disable Data Transfer Objects (DTO)
     'dto_enabled' => true,
+    'ui_mode' => 'bootstrap',// adminlte - bootstrap
 
     // Enable or disable policies
     'policies_enabled' => false,

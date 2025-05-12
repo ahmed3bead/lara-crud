@@ -20,4 +20,14 @@ class {{ ClassNamePlural }}Service extends BaseService
     {
         parent::__construct($repository, $mapper);
     }
+
+    /**
+     * Get the model class associated with this service
+     *
+     * @return string
+     */
+    public function getModelClass(): string
+    {
+        return {{ ModelName }}::class;
+    }
 }

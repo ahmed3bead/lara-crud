@@ -28,13 +28,39 @@ class CrudBlueprintExportTableToJson extends Command
     public function handle()
     {
         $table = $this->argument('table');
-        $path = $this->option('path') ?: $this->getFieldsPath($table);
+
         try {
+            // Check if the table exists
+            if (!Schema::hasTable($table)) {
+                $this->error("Table {$table} does not exist in the database.");
+                return 1;
+            }
+
+            // Get the table schema
             $schema = $this->getTableSchema($table);
-            $this->exportSchemaToJson($schema, $path, $table);
-            $this->info("Table schema for {$table} exported successfully.");
+
+            // Generate the JSON file path
+            $path = storage_path("ahmed3bead/lara-crud/templates/fields/{$table}");
+            if (!File::exists($path)) {
+                File::makeDirectory($path, 0755, true);
+            }
+
+            $jsonPath = "{$path}/{$table}.json";
+
+            // Create the JSON file
+            $jsonContent = json_encode([
+                'table' => $table,
+                'fields' => $this->formatFieldsForJson($schema),
+            ], JSON_PRETTY_PRINT);
+
+            File::put($jsonPath, $jsonContent);
+
+            $this->info("Table schema exported to {$jsonPath}");
+
+            return 0;
         } catch (\Exception $e) {
             $this->error("Error exporting table schema: " . $e->getMessage());
+            return 1;
         }
     }
 
@@ -47,24 +73,147 @@ class CrudBlueprintExportTableToJson extends Command
     private function getTableSchema(string $table): array
     {
         $columns = Schema::getColumnListing($table);
-        $columnDetails = Schema::getConnection()->getDoctrineSchemaManager()->listTableColumns($table);
-
         $schema = [];
+
         foreach ($columns as $column) {
-            $columnType = Schema::getColumnType($table, $column);
-            $isNullable = !$columnDetails[$column]->getNotnull();
+            try {
+                $columnType = Schema::getColumnType($table, $column);
+            } catch (\Exception $e) {
+                // Default to string if we can't determine the type
+                $columnType = 'string';
+            }
+
+            // Determine whether column is nullable using a compatibility approach
+            $isNullable = false;
+            try {
+                $columnInfo = DB::select("SHOW COLUMNS FROM `{$table}` WHERE Field = '{$column}'");
+                $isNullable = isset($columnInfo[0]) && $columnInfo[0]->Null === 'YES';
+            } catch (\Exception $e) {
+                // If SHOW COLUMNS fails, try a more generic approach
+                try {
+                    $columnInfo = DB::select("SELECT IS_NULLABLE FROM INFORMATION_SCHEMA.COLUMNS 
+                                           WHERE TABLE_NAME = '{$table}' AND COLUMN_NAME = '{$column}'");
+                    $isNullable = isset($columnInfo[0]) && $columnInfo[0]->IS_NULLABLE === 'YES';
+                } catch (\Exception $e) {
+                    // If that also fails, make a reasonable guess
+                    $isNullable = !in_array($column, ['id']);
+                }
+            }
+
             $phpType = $this->convertToPHPType($columnType);
             $isHidden = in_array($column, ['password', 'remember_token']);
+
             $schema[$column] = [
-                'validation' => '',
-                'fillable' => true,
-                'type' => $phpType,
-                'setterAndGetter' => true,
+                'name' => $column,
+                'type' => $columnType,
+                'phpType' => $phpType,
                 'nullable' => $isNullable,
                 'hidden' => $isHidden,
+                'fillable' => !in_array($column, ['id', 'created_at', 'updated_at', 'deleted_at']),
             ];
         }
+
         return $schema;
+    }
+    /**
+     * Fallback method to provide a basic schema when database introspection fails
+     */
+    private function getBasicSchema(): array
+    {
+        // Return a generic schema with common fields
+        return [
+            'id' => [
+                'validation' => '',
+                'fillable' => false,
+                'type' => 'int',
+                'setterAndGetter' => true,
+                'nullable' => false,
+                'hidden' => false,
+            ],
+            'name' => [
+                'validation' => 'required|string|max:255',
+                'fillable' => true,
+                'type' => 'string',
+                'setterAndGetter' => true,
+                'nullable' => false,
+                'hidden' => false,
+            ],
+            'description' => [
+                'validation' => 'nullable|string',
+                'fillable' => true,
+                'type' => 'string',
+                'setterAndGetter' => true,
+                'nullable' => true,
+                'hidden' => false,
+            ],
+            'created_at' => [
+                'validation' => '',
+                'fillable' => false,
+                'type' => 'DateTime',
+                'setterAndGetter' => true,
+                'nullable' => true,
+                'hidden' => false,
+            ],
+            'updated_at' => [
+                'validation' => '',
+                'fillable' => false,
+                'type' => 'DateTime',
+                'setterAndGetter' => true,
+                'nullable' => true,
+                'hidden' => false,
+            ],
+        ];
+    }
+    /**
+     * Generate validation rules based on column properties
+     */
+    private function generateValidationRules($column, $columnType, $isNullable): string
+    {
+        $rules = [];
+
+        if (!$isNullable) {
+            $rules[] = 'required';
+        } else {
+            $rules[] = 'nullable';
+        }
+
+        switch ($columnType) {
+            case 'string':
+                $rules[] = 'string';
+                if (Str::endsWith($column, ['_email', 'email'])) {
+                    $rules[] = 'email';
+                } elseif (Str::endsWith($column, ['_url', 'url', 'link', 'website'])) {
+                    $rules[] = 'url';
+                } else {
+                    $rules[] = 'max:255';
+                }
+                break;
+            case 'integer':
+            case 'bigint':
+            case 'int':
+            case 'smallint':
+            case 'tinyint':
+                $rules[] = 'integer';
+                break;
+            case 'boolean':
+            case 'bool':
+                $rules[] = 'boolean';
+                break;
+            case 'float':
+            case 'double':
+            case 'decimal':
+                $rules[] = 'numeric';
+                break;
+            case 'date':
+                $rules[] = 'date';
+                break;
+            case 'datetime':
+            case 'timestamp':
+                $rules[] = 'date';
+                break;
+        }
+
+        return implode('|', $rules);
     }
 
     /**
@@ -104,37 +253,6 @@ class CrudBlueprintExportTableToJson extends Command
             $body[$key] = $this->generateDefaultValue($attributes['type']);
         }
         return $body;
-    }
-
-    /**
-     * Generate validation rules from schema.
-     *
-     * @param array $schema
-     * @param bool $forUpdate
-     * @return array
-     */
-    private function generateValidationRules(array $schema, bool $forUpdate = false): array
-    {
-        $required = $forUpdate ? 'sometimes' : 'required';
-        $validationRules = [];
-
-        foreach ($schema as $key => $attributes) {
-            if (in_array($key, ["id", "deleted_at", "created_at", "updated_at"])) {
-                continue;
-            }
-            $rules = [];
-            if (!$attributes['nullable']) {
-                $rules[] = $required;
-            }
-            $rules[] = $this->getValidationRuleForType($attributes['type']);
-            if (Str::endsWith($key, '_id')) {
-                $relatedTable = Str::plural(Str::before($key, '_id'));
-                $rules[] = 'exists:' . $relatedTable . ',id';
-            }
-            $validationRules[$key] = implode('|', $rules);
-        }
-
-        return $validationRules;
     }
 
     /**
@@ -190,6 +308,25 @@ class CrudBlueprintExportTableToJson extends Command
             'json' => 'array',
             default => 'string',
         };
+    }
+
+    private function formatFieldsForJson(array $schema): array
+    {
+        $fields = [];
+
+        foreach ($schema as $column => $details) {
+            $fields[] = [
+                'name' => $column,
+                'type' => $details['type'],
+                'phpType' => $details['phpType'] ?? $this->convertToPHPType($details['type']),
+                'nullable' => $details['nullable'] ?? false,
+                'hidden' => $details['hidden'] ?? false,
+                'fillable' => $details['fillable'] ?? true,
+                'validation' => $this->generateValidationRules($column, $details['type'], $details['nullable'] ?? false),
+            ];
+        }
+
+        return $fields;
     }
 
 

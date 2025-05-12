@@ -17,98 +17,53 @@ class ViewGenerator
     protected $viewPath;
     protected $stubsPath;
     protected $framework;
+    protected $configs;
+    protected $namespace_group;
+    protected $endpoint;
 
-    public function __construct($modelName, $tableName, $framework = 'bootstrap')
+    public function __construct($modelName, $tableName, $framework = 'bootstrap', $namespace_group = null, $endpoint = null)
     {
+        $this->configs = config('lara_crud');
         $this->modelName = $modelName;
         $this->tableName = $tableName;
         $this->modelVariable = lcfirst($modelName);
         $this->modelVariablePlural = Str::plural($this->modelVariable);
         $this->routePrefix = Str::kebab(Str::plural($modelName));
-        $this->viewPath = resource_path('views/' . $this->routePrefix);
         $this->framework = $framework;
+        $this->namespace_group = $namespace_group;
+        $this->endpoint = $endpoint;
+
+        // Determine view path based on namespace_group and endpoint if provided
+        $this->viewPath = resource_path('views/' . $this->routePrefix);
+
+        // If using endpoints or namespace groups, adjust the view path
+        if ($this->endpoint) {
+            $this->viewPath = resource_path('views/' . $this->endpoint . '/' . $this->routePrefix);
+        }
+
+        if ($this->namespace_group) {
+            $this->viewPath = resource_path('views/' . $this->namespace_group . '/' . $this->routePrefix);
+        }
 
         // Set the appropriate stubs path based on the framework
+        $this->setStubsPath();
+    }
+
+    protected function setStubsPath()
+    {
         if ($this->framework === 'adminlte') {
             $this->stubsPath = __DIR__ . '/../../resources/stubs/views/adminlte';
-            if (!File::isDirectory($this->stubsPath)) {
-                $this->stubsPath = resource_path('stubs/views/adminlte');
-            }
         } else {
             // Default to bootstrap
             $this->stubsPath = __DIR__ . '/../../resources/stubs/views/bootstrap';
-            if (!File::isDirectory($this->stubsPath)) {
-                $this->stubsPath = resource_path('stubs/views/bootstrap');
-            }
         }
 
-        // Ensure the stubs directory exists
-        $this->ensureStubsExist();
-
-        $this->fields = $this->getTableColumns();
-    }
-
-    /**
-     * Ensure stubs exist, create them if needed
-     */
-    protected function ensureStubsExist()
-    {
+        // If stubs directory doesn't exist in package, try published stubs
         if (!File::isDirectory($this->stubsPath)) {
-            File::makeDirectory($this->stubsPath, 0755, true);
-
-            // Create default stubs based on framework
-            $this->createDefaultStubs();
-        }
-    }
-
-    /**
-     * Create default stubs if they don't exist
-     */
-    protected function createDefaultStubs()
-    {
-        $stubs = ['index.stub', 'create.stub', 'edit.stub', 'show.stub'];
-
-        foreach ($stubs as $stub) {
-            $stubPath = $this->stubsPath . '/' . $stub;
-
-            if (!File::exists($stubPath)) {
-                $content = $this->getDefaultStubContent($stub);
-                File::put($stubPath, $content);
-            }
-        }
-    }
-
-    /**
-     * Get default stub content based on framework and stub name
-     */
-    protected function getDefaultStubContent($stubName)
-    {
-        if ($this->framework === 'adminlte') {
-            switch ($stubName) {
-                case 'index.stub':
-                    return $this->getAdminLTEIndexStub();
-                case 'create.stub':
-                    return $this->getAdminLTECreateStub();
-                case 'edit.stub':
-                    return $this->getAdminLTEEditStub();
-                case 'show.stub':
-                    return $this->getAdminLTEShowStub();
-                default:
-                    return '';
-            }
-        } else {
-            // Bootstrap framework
-            switch ($stubName) {
-                case 'index.stub':
-                    return $this->getBootstrapIndexStub();
-                case 'create.stub':
-                    return $this->getBootstrapCreateStub();
-                case 'edit.stub':
-                    return $this->getBootstrapEditStub();
-                case 'show.stub':
-                    return $this->getBootstrapShowStub();
-                default:
-                    return '';
+            if ($this->framework === 'adminlte') {
+                $this->stubsPath = resource_path('stubs/views/adminlte');
+            } else {
+                $this->stubsPath = resource_path('stubs/views/bootstrap');
             }
         }
     }
@@ -255,8 +210,9 @@ class ViewGenerator
     protected function generateTableHeaders()
     {
         $headers = '';
+        $fields = $this->getTableColumns();
 
-        foreach ($this->fields as $field) {
+        foreach ($fields as $field) {
             if (!in_array($field, ['id', 'created_at', 'updated_at', 'deleted_at'])) {
                 $headers .= "<th>" . Str::title(str_replace('_', ' ', $field)) . "</th>\n                        ";
             }
@@ -268,8 +224,9 @@ class ViewGenerator
     protected function generateTableRows()
     {
         $rows = '';
+        $fields = $this->getTableColumns();
 
-        foreach ($this->fields as $field) {
+        foreach ($fields as $field) {
             if (!in_array($field, ['id', 'created_at', 'updated_at', 'deleted_at'])) {
                 $rows .= "<td>{{ \$" . $this->modelVariable . "->" . $field . " }}</td>\n                        ";
             }
@@ -281,8 +238,9 @@ class ViewGenerator
     protected function generateFormFields($isEdit = false)
     {
         $formFields = '';
+        $fields = $this->getTableColumns();
 
-        foreach ($this->fields as $field) {
+        foreach ($fields as $field) {
             if (!in_array($field, ['id', 'created_at', 'updated_at', 'deleted_at'])) {
                 $label = Str::title(str_replace('_', ' ', $field));
                 $value = $isEdit ? '{{ $' . $this->modelVariable . '->' . $field . ' }}' : '{{ old(\'' . $field . '\') }}';
@@ -378,8 +336,9 @@ HTML;
     protected function generateDetailRows()
     {
         $rows = '';
+        $fields = $this->getTableColumns();
 
-        foreach ($this->fields as $field) {
+        foreach ($fields as $field) {
             if (!in_array($field, ['id', 'created_at', 'updated_at', 'deleted_at'])) {
                 $label = Str::title(str_replace('_', ' ', $field));
                 $rows .= <<<HTML
@@ -393,488 +352,5 @@ HTML;
         }
 
         return $rows;
-    }
-
-    // AdminLTE stub templates
-    protected function getAdminLTEIndexStub()
-    {
-        return <<<'BLADE'
-@extends('adminlte::page')
-
-@section('title', '{{modelName}} Management')
-
-@section('content_header')
-    <h1>{{modelName}} Management</h1>
-@stop
-
-@section('content')
-    <div class="card">
-        <div class="card-header">
-            <h3 class="card-title">{{modelName}} List</h3>
-            <div class="card-tools">
-                <a href="{{ route('{{routePrefix}}.create') }}" class="btn btn-primary">
-                    <i class="fas fa-plus"></i> Add New
-                </a>
-            </div>
-        </div>
-        <div class="card-body">
-            @if (session('success'))
-                <div class="alert alert-success">
-                    {{ session('success') }}
-                </div>
-            @endif
-            
-            <table class="table table-bordered">
-                <thead>
-                    <tr>
-                        <th style="width: 10px">#</th>
-                        {{tableHeaders}}
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @forelse(${{modelVariablePlural}} as ${{modelVariable}})
-                    <tr>
-                        <td>{{ ${{modelVariable}}->id }}</td>
-                        {{tableRows}}
-                        <td>
-                            <a href="{{ route('{{routePrefix}}.show', ${{modelVariable}}->id) }}" class="btn btn-sm btn-info">
-                                <i class="fas fa-eye"></i>
-                            </a>
-                            <a href="{{ route('{{routePrefix}}.edit', ${{modelVariable}}->id) }}" class="btn btn-sm btn-warning">
-                                <i class="fas fa-edit"></i>
-                            </a>
-                            <form action="{{ route('{{routePrefix}}.destroy', ${{modelVariable}}->id) }}" method="POST" style="display: inline-block;">
-                                @csrf
-                                @method('DELETE')
-                                <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure?')">
-                                    <i class="fas fa-trash"></i>
-                                </button>
-                            </form>
-                        </td>
-                    </tr>
-                    @empty
-                    <tr>
-                        <td colspan="100%" class="text-center">No {{modelVariablePlural}} found</td>
-                    </tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
-        <div class="card-footer clearfix">
-            {{ ${{modelVariablePlural}}->links() }}
-        </div>
-    </div>
-@stop
-
-@section('css')
-    <link rel="stylesheet" href="/css/admin_custom.css">
-@stop
-
-@section('js')
-    <script>
-        $(document).ready(function() {
-            // Any additional JavaScript
-        });
-    </script>
-@stop
-BLADE;
-    }
-
-    protected function getAdminLTECreateStub()
-    {
-        return <<<'BLADE'
-@extends('adminlte::page')
-
-@section('title', 'Create {{modelName}}')
-
-@section('content_header')
-    <h1>Create {{modelName}}</h1>
-@stop
-
-@section('content')
-    <div class="card">
-        <div class="card-header">
-            <h3 class="card-title">Create New {{modelName}}</h3>
-        </div>
-        <form action="{{ route('{{routePrefix}}.store') }}" method="POST">
-            @csrf
-            <div class="card-body">
-                @if ($errors->any())
-                    <div class="alert alert-danger">
-                        <ul>
-                            @foreach ($errors->all() as $error)
-                                <li>{{ $error }}</li>
-                            @endforeach
-                        </ul>
-                    </div>
-                @endif
-                
-                {{formFields}}
-            </div>
-            <div class="card-footer">
-                <button type="submit" class="btn btn-primary">Submit</button>
-                <a href="{{ route('{{routePrefix}}.index') }}" class="btn btn-default">Cancel</a>
-            </div>
-        </form>
-    </div>
-@stop
-
-@section('css')
-    <link rel="stylesheet" href="/css/admin_custom.css">
-@stop
-
-@section('js')
-    <script>
-        $(document).ready(function() {
-            // Any additional JavaScript
-        });
-    </script>
-@stop
-BLADE;
-    }
-
-    protected function getAdminLTEEditStub()
-    {
-        return <<<'BLADE'
-@extends('adminlte::page')
-
-@section('title', 'Edit {{modelName}}')
-
-@section('content_header')
-    <h1>Edit {{modelName}}</h1>
-@stop
-
-@section('content')
-    <div class="card">
-        <div class="card-header">
-            <h3 class="card-title">Edit {{modelName}}</h3>
-        </div>
-        <form action="{{ route('{{routePrefix}}.update', ${{modelVariable}}->id) }}" method="POST">
-            @csrf
-            @method('PUT')
-            <div class="card-body">
-                @if ($errors->any())
-                    <div class="alert alert-danger">
-                        <ul>
-                            @foreach ($errors->all() as $error)
-                                <li>{{ $error }}</li>
-                            @endforeach
-                        </ul>
-                    </div>
-                @endif
-                
-                {{formFields}}
-            </div>
-            <div class="card-footer">
-                <button type="submit" class="btn btn-primary">Update</button>
-                <a href="{{ route('{{routePrefix}}.index') }}" class="btn btn-default">Cancel</a>
-            </div>
-        </form>
-    </div>
-@stop
-
-@section('css')
-    <link rel="stylesheet" href="/css/admin_custom.css">
-@stop
-
-@section('js')
-    <script>
-        $(document).ready(function() {
-            // Any additional JavaScript
-        });
-    </script>
-@stop
-BLADE;
-    }
-
-    protected function getAdminLTEShowStub()
-    {
-        return <<<'BLADE'
-@extends('adminlte::page')
-
-@section('title', 'View {{modelName}}')
-
-@section('content_header')
-    <h1>View {{modelName}}</h1>
-@stop
-
-@section('content')
-    <div class="card">
-        <div class="card-header">
-            <h3 class="card-title">{{modelName}} Details</h3>
-            <div class="card-tools">
-                <a href="{{ route('{{routePrefix}}.edit', ${{modelVariable}}->id) }}" class="btn btn-warning">
-                    <i class="fas fa-edit"></i> Edit
-                </a>
-                <a href="{{ route('{{routePrefix}}.index') }}" class="btn btn-default">
-                    <i class="fas fa-arrow-left"></i> Back
-                </a>
-            </div>
-        </div>
-        <div class="card-body">
-            <table class="table table-bordered">
-                <tbody>
-                    <tr>
-                        <th style="width: 200px">ID</th>
-                        <td>{{ ${{modelVariable}}->id }}</td>
-                    </tr>
-                    {{detailRows}}
-                    <tr>
-                        <th>Created At</th>
-                        <td>{{ ${{modelVariable}}->created_at }}</td>
-                    </tr>
-                    <tr>
-                        <th>Updated At</th>
-                        <td>{{ ${{modelVariable}}->updated_at }}</td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-    </div>
-@stop
-
-@section('css')
-    <link rel="stylesheet" href="/css/admin_custom.css">
-@stop
-
-@section('js')
-    <script>
-        $(document).ready(function() {
-            // Any additional JavaScript
-        });
-    </script>
-@stop
-BLADE;
-    }
-
-// Bootstrap stub templates
-    protected function getBootstrapIndexStub()
-    {
-        return <<<'BLADE'
-@extends('layouts.app')
-
-@section('content')
-<div class="container">
-    <div class="row justify-content-center">
-        <div class="col-md-12">
-            <div class="card">
-                <div class="card-header">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <h2>{{modelName}} Management</h2>
-                        <a href="{{ route('{{routePrefix}}.create') }}" class="btn btn-primary">
-                            <i class="fa fa-plus"></i> Add New
-                        </a>
-                    </div>
-                </div>
-
-                <div class="card-body">
-                    @if (session('success'))
-                        <div class="alert alert-success" role="alert">
-                            {{ session('success') }}
-                        </div>
-                    @endif
-
-                    <div class="table-responsive">
-                        <table class="table table-bordered table-striped">
-                            <thead>
-                                <tr>
-                                    <th>#</th>
-                                    {{tableHeaders}}
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @forelse(${{modelVariablePlural}} as ${{modelVariable}})
-                                <tr>
-                                    <td>{{ ${{modelVariable}}->id }}</td>
-                                    {{tableRows}}
-                                    <td>
-                                        <div class="d-flex">
-                                            <a href="{{ route('{{routePrefix}}.show', ${{modelVariable}}->id) }}" class="btn btn-info btn-sm mr-1">
-                                                <i class="fa fa-eye"></i>
-                                            </a>
-                                            <a href="{{ route('{{routePrefix}}.edit', ${{modelVariable}}->id) }}" class="btn btn-warning btn-sm mr-1">
-                                                <i class="fa fa-edit"></i>
-                                            </a>
-                                            <form action="{{ route('{{routePrefix}}.destroy', ${{modelVariable}}->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Are you sure?');">
-                                                @csrf
-                                                @method('DELETE')
-                                                <button type="submit" class="btn btn-danger btn-sm">
-                                                    <i class="fa fa-trash"></i>
-                                                </button>
-                                            </form>
-                                        </div>
-                                    </td>
-                                </tr>
-                                @empty
-                                <tr>
-                                    <td colspan="100%" class="text-center">No {{modelVariablePlural}} found</td>
-                                </tr>
-                                @endforelse
-                            </tbody>
-                        </table>
-                    </div>
-
-                    <div class="mt-3">
-                        {{ ${{modelVariablePlural}}->links() }}
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-@endsection
-BLADE;
-    }
-
-    protected function getBootstrapCreateStub()
-    {
-        return <<<'BLADE'
-@extends('layouts.app')
-
-@section('content')
-<div class="container">
-    <div class="row justify-content-center">
-        <div class="col-md-12">
-            <div class="card">
-                <div class="card-header">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <h2>Create {{modelName}}</h2>
-                        <a href="{{ route('{{routePrefix}}.index') }}" class="btn btn-secondary">
-                            <i class="fa fa-arrow-left"></i> Back
-                        </a>
-                    </div>
-                </div>
-
-                <div class="card-body">
-                    @if ($errors->any())
-                        <div class="alert alert-danger">
-                            <ul>
-                                @foreach ($errors->all() as $error)
-                                    <li>{{ $error }}</li>
-                                @endforeach
-                            </ul>
-                        </div>
-                    @endif
-
-                    <form action="{{ route('{{routePrefix}}.store') }}" method="POST">
-                        @csrf
-                        
-                        {{formFields}}
-                        
-                        <div class="form-group mt-4">
-                            <button type="submit" class="btn btn-primary">Save</button>
-                            <a href="{{ route('{{routePrefix}}.index') }}" class="btn btn-secondary">Cancel</a>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-@endsection
-BLADE;
-    }
-
-    protected function getBootstrapEditStub()
-    {
-        return <<<'BLADE'
-@extends('layouts.app')
-
-@section('content')
-<div class="container">
-    <div class="row justify-content-center">
-        <div class="col-md-12">
-            <div class="card">
-                <div class="card-header">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <h2>Edit {{modelName}}</h2>
-                        <a href="{{ route('{{routePrefix}}.index') }}" class="btn btn-secondary">
-                            <i class="fa fa-arrow-left"></i> Back
-                        </a>
-                    </div>
-                </div>
-
-                <div class="card-body">
-                    @if ($errors->any())
-                        <div class="alert alert-danger">
-                            <ul>
-                                @foreach ($errors->all() as $error)
-                                    <li>{{ $error }}</li>
-                                @endforeach
-                            </ul>
-                        </div>
-                    @endif
-
-                    <form action="{{ route('{{routePrefix}}.update', ${{modelVariable}}->id) }}" method="POST">
-                        @csrf
-                        @method('PUT')
-                        
-                        {{formFields}}
-                        
-                        <div class="form-group mt-4">
-                            <button type="submit" class="btn btn-primary">Update</button>
-                            <a href="{{ route('{{routePrefix}}.index') }}" class="btn btn-secondary">Cancel</a>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-@endsection
-BLADE;
-    }
-
-    protected function getBootstrapShowStub()
-    {
-        return <<<'BLADE'
-@extends('layouts.app')
-
-@section('content')
-<div class="container">
-    <div class="row justify-content-center">
-        <div class="col-md-12">
-            <div class="card">
-                <div class="card-header">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <h2>{{modelName}} Details</h2>
-                        <div>
-                            <a href="{{ route('{{routePrefix}}.edit', ${{modelVariable}}->id) }}" class="btn btn-warning">
-                                <i class="fa fa-edit"></i> Edit
-                            </a>
-                            <a href="{{ route('{{routePrefix}}.index') }}" class="btn btn-secondary">
-                                <i class="fa fa-arrow-left"></i> Back
-                            </a>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="card-body">
-                    <table class="table table-bordered">
-                        <tbody>
-                            <tr>
-                                <th style="width: 200px">ID</th>
-                                <td>{{ ${{modelVariable}}->id }}</td>
-                            </tr>
-                            {{detailRows}}
-                            <tr>
-                                <th>Created At</th>
-                                <td>{{ ${{modelVariable}}->created_at }}</td>
-                            </tr>
-                            <tr>
-                                <th>Updated At</th>
-                                <td>{{ ${{modelVariable}}->updated_at }}</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-@endsection
-BLADE;
     }
 }

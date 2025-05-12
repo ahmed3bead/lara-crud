@@ -90,6 +90,7 @@ class BaseDTOMapper
                 'lastPage'    => $paginator->lastPage(),
                 'path'        => $paginator->path(),
                 'perPage'     => $paginator->perPage(),
+                'links'     => $paginator->links(),
                 'total'       => $paginator->total(),
             ],
         ];
