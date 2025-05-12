@@ -75,7 +75,7 @@ class CrudBlueprint extends Command
                 'line' => $e->getLine(),
                 'file' => $e->getFile(),
             ];
-            dd($error);
+            throw new \Exception(json_encode($error));
         }
 
         return 1;
