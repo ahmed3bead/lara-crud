@@ -91,6 +91,55 @@ The package provides a trait with methods to handle standardized API responses, 
 $response = $this->setSuccessResponse("Operation successful.", HttpStatus::HTTP_OK);
 ```
 
+## View Generation with Multiple UI Frameworks
+
+The lara-crud package now supports generating views for your CRUD operations with different UI frameworks:
+
+### Available UI Frameworks
+
+- **Bootstrap**: A clean, responsive Bootstrap-based UI
+- **AdminLTE**: A full-featured admin dashboard based on Bootstrap
+
+### Generating Views
+
+To generate views for your model, use the `--with-views` option with your preferred UI framework:
+
+```bash
+# Generate with AdminLTE
+php artisan crud:go --with-views=adminlte
+
+# Generate with Bootstrap
+php artisan crud:go --with-views=bootstrap
+
+# Or let the CLI prompt you to choose
+php artisan crud:go --with-views
+
+````
+#### Prerequisites for AdminLTE
+If you choose the AdminLTE option, you'll need to have the AdminLTE package installed:
+```bash
+composer require jeroennoten/laravel-adminlte
+php artisan adminlte:install
+````
+If the package is not installed, the command will offer to install it for you.
+
+#### Customizing View Stubs
+You can publish the view stubs to customize them:
+
+````bash
+
+# Publish AdminLTE stubs
+php artisan vendor:publish --tag=lara-crud-adminlte-stubs
+
+# Publish Bootstrap stubs
+php artisan vendor:publish --tag=lara-crud-bootstrap-stubs
+
+# Or publish all view stubs
+php artisan vendor:publish --tag=lara-crud-views-stubs
+
+````
+This will publish the stubs to resources/stubs/views/ where you can modify them according to your needs.
+
 ### Error Handling
 
 The package includes methods to handle and format error responses uniformly.

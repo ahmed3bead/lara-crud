@@ -1,0 +1,25 @@
+@extends('adminlte::page')
+
+@section('title', 'Create {{modelName}}')
+
+@section('content_header')
+    <h1>Create {{modelName}}</h1>
+@stop
+
+@section('content')
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">Create New {{modelName}}</h3>
+        </div>
+        <form action="{{ route('{{routePrefix}}.store') }}" method="POST">
+            @csrf
+            <div class="card-body">
+                {{formFields}}
+            </div>
+            <div class="card-footer">
+                <button type="submit" class="btn btn-primary">Submit</button>
+                <a href="{{ route('{{routePrefix}}.index') }}" class="btn btn-default">Cancel</a>
+            </div>
+        </form>
+    </div>
+@stop

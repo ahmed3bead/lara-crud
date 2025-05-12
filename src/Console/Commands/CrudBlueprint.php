@@ -4,6 +4,8 @@ namespace Ahmed3bead\LaraCrud\Console\Commands;
 
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\File;
+use Ahmed3bead\LaraCrud\Generators\ViewGenerator;
+use Ahmed3bead\LaraCrud\Generators\WebControllerGenerator;
 
 class CrudBlueprint extends Command
 {
@@ -18,7 +20,8 @@ class CrudBlueprint extends Command
                             {--fields= : Field names for the form & migration.}
                             {--fields_from_file= : Fields from a json file.}
                             {--validations= : Validation rules for the fields.}
-                            {--pk=id : The name of the primary key.}';
+                            {--pk=id : The name of the primary key.}
+                            {--with-views= : Generate views with specified UI framework (adminlte, bootstrap).}';
 
     protected $description = 'This will create all required basic files and folders for modules';
 
@@ -46,6 +49,21 @@ class CrudBlueprint extends Command
             if ($this->confirm('Do you need to create Controller for --> ' . $name . ' ?', true)) {
                 $this->createController($name, $table);
             }
+
+            // Add views generation with framework selection
+            if ($viewFramework = $this->option('with-views')) {
+                if ($viewFramework === true) {
+                    // If --with-views is used without a value, let the user select
+                    $viewFramework = $this->choice(
+                        'Select UI framework for views:',
+                        ['adminlte', 'bootstrap'],
+                        0
+                    );
+                }
+
+                $this->createViews($name, $table, $viewFramework);
+            }
+
             if ($this->confirm('Do you need to create Unit Test for --> ' . $name . ' ?', true)) {
                 $this->createUnitTest($name, $table, $fields);
             }
@@ -63,70 +81,120 @@ class CrudBlueprint extends Command
         return 1;
     }
 
-    private function createDirectories($name)
+    // Existing methods...
+
+    /**
+     * Create views for the model with the specified UI framework
+     */
+    private function createViews($name, $table, $framework)
     {
-        $namespace_group = $this->option('namespace_group') ?: null;
-        $this->call('crud:dirs', ['name' => $name, '--namespace_group' => $namespace_group]);
-        $this->info('Directories created successfully!');
+        if ($framework === 'adminlte') {
+            $this->createAdminLTEViews($name, $table);
+        } elseif ($framework === 'bootstrap') {
+            $this->createBootstrapViews($name, $table);
+        } else {
+            $this->error("Unsupported UI framework: {$framework}");
+            return;
+        }
     }
 
-    private function createModel($name, $table, $fields)
+    /**
+     * Create AdminLTE views for the model
+     */
+    private function createAdminLTEViews($name, $table)
     {
-        $namespace_group = $this->option('namespace_group') ?: null;
-        $fieldsArray = explode(';', $fields);
-        $fillableArray = [];
+        // Check if AdminLTE is installed
+        if (!$this->isAdminLTEInstalled()) {
+            $this->warn('AdminLTE package is not installed.');
 
-        foreach ($fieldsArray as $item) {
-            $spareParts = explode('#', trim($item));
-            $fillableArray[] = $spareParts[0];
+            if ($this->confirm('Do you want to install AdminLTE now?', true)) {
+                $this->installAdminLTE();
+            } else {
+                $this->warn('Skipping AdminLTE view generation. Please install AdminLTE manually if needed.');
+                return;
+            }
         }
 
-        $fillable = "['" . implode("', '", $fillableArray) . "']";
-        $primaryKey = $this->option('pk');
+        $this->info('Generating AdminLTE views...');
 
-        $this->call('crud:model', [
-            'name' => $name,
-            '--fillable' => $fillable,
-            '--table-name' => $table,
-            '--pk' => $primaryKey,
-            '--namespace_group' => $namespace_group,
-        ]);
+        // Generate web controller for views
+        $webControllerGenerator = new WebControllerGenerator($name, $table);
+        $webControllerGenerator->generate();
 
-        $this->info('Model and related stuff created successfully!');
+        // Generate AdminLTE views
+        $viewGenerator = new ViewGenerator($name, $table, 'adminlte');
+        $viewGenerator->generate();
+
+        // Generate web routes
+        $this->generateWebRoutes($name);
+
+        $this->info('AdminLTE views generated successfully!');
     }
 
-    private function createController($name, $table)
+    /**
+     * Create Bootstrap views for the model
+     */
+    private function createBootstrapViews($name, $table)
     {
-        $namespace_group = $this->option('namespace_group') ?: null;
-        $this->call('crud:api-controller', [
-            'name' => $name,
-            '--table-name' => $table,
-            '--namespace_group' => $namespace_group,
-        ]);
-        $this->info('API Controller created successfully!');
+        $this->info('Generating Bootstrap views...');
+
+        // Generate web controller for views
+        $webControllerGenerator = new WebControllerGenerator($name, $table);
+        $webControllerGenerator->generate();
+
+        // Generate Bootstrap views
+        $viewGenerator = new ViewGenerator($name, $table, 'bootstrap');
+        $viewGenerator->generate();
+
+        // Generate web routes
+        $this->generateWebRoutes($name);
+
+        $this->info('Bootstrap views generated successfully!');
     }
 
-    protected function processJSONFields($file)
+    /**
+     * Check if AdminLTE package is installed
+     */
+    private function isAdminLTEInstalled()
     {
-        $json = File::get($file);
-        $fields = json_decode($json);
+        return class_exists('\JeroenNoten\LaravelAdminLte\AdminLteServiceProvider');
+    }
 
-        $fieldsString = '';
-        foreach ($fields->fields as $field) {
-            $fieldsString .= $field->name . '#' . $field->type . ';';
+    /**
+     * Install AdminLTE package
+     */
+    private function installAdminLTE()
+    {
+        $this->info('Installing AdminLTE package...');
+
+        // Use composer to require the package
+        $this->info('Running: composer require jeroennoten/laravel-adminlte');
+        exec('composer require jeroennoten/laravel-adminlte');
+
+        // Install AdminLTE
+        $this->info('Running: php artisan adminlte:install');
+        \Artisan::call('adminlte:install');
+        $this->info(\Artisan::output());
+
+        $this->info('AdminLTE installed successfully!');
+    }
+
+    /**
+     * Generate web routes for the model
+     */
+    private function generateWebRoutes($name)
+    {
+        $routeName = \Illuminate\Support\Str::kebab(\Illuminate\Support\Str::plural($name));
+        $controllerName = "{$name}Controller";
+
+        $routeContent = "\nRoute::resource('{$routeName}', App\\Http\\Controllers\\{$controllerName}::class);";
+
+        $webRoutesPath = base_path('routes/web.php');
+        $currentRoutes = file_get_contents($webRoutesPath);
+
+        if (!str_contains($currentRoutes, $routeContent)) {
+            file_put_contents($webRoutesPath, $currentRoutes . $routeContent);
+            $this->info("Web routes added to routes/web.php");
         }
-
-        return rtrim($fieldsString, ';');
-    }
-
-    private function createUnitTest(mixed $name, $table, string $fields)
-    {
-        $namespace_group = $this->option('namespace_group') ?: null;
-        $this->call('crud:unit-test', [
-            'name' => $name,
-            '--table-name' => $table,
-            '--namespace_group' => $namespace_group,
-        ]);
-        $this->info('Unit Test created successfully!');
     }
 }

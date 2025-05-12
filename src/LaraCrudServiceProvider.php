@@ -38,6 +38,11 @@ class LaraCrudServiceProvider extends ServiceProvider
         $this->publishes([
             __DIR__ . '/templates' => resource_path('ahmed3bead/lara_crud/templates'),
         ], 'templates');
+        $this->publishes([
+            __DIR__.'/../resources/stubs/views' => resource_path('stubs/views'),
+        ], 'lara-crud-views-stubs');
+
+        $this->loadViewsFrom(__DIR__.'/../resources/views', 'lara-crud');
 
         // Register console commands if running in console
         if ($this->app->runningInConsole()) {

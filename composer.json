@@ -25,5 +25,8 @@
         "php": "^8.0|^8.1|^8.2|^8.3",
         "laravel/framework": "^9.0 || ^10.0|| ^11.0|| ^12.0",
         "spatie/laravel-query-builder": "^4.0 || ^5.0 || ^6.0"
+    },
+    "suggest": {
+        "jeroennoten/laravel-adminlte": "^3.8 - Required for AdminLTE view generation"
     }
 }

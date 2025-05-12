@@ -1,0 +1,26 @@
+@extends('adminlte::page')
+
+@section('title', 'Edit {{modelName}}')
+
+@section('content_header')
+    <h1>Edit {{modelName}}</h1>
+@stop
+
+@section('content')
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">Edit {{modelName}}</h3>
+        </div>
+        <form action="{{ route('{{routePrefix}}.update', ${{modelVariable}}->id) }}" method="POST">
+            @csrf
+            @method('PUT')
+            <div class="card-body">
+                {{formFields}}
+            </div>
+            <div class="card-footer">
+                <button type="submit" class="btn btn-primary">Update</button>
+                <a href="{{ route('{{routePrefix}}.index') }}" class="btn btn-default">Cancel</a>
+            </div>
+        </form>
+    </div>
+@stop

@@ -1,0 +1,42 @@
+@extends('adminlte::page')
+
+@section('title', 'View {{modelName}}')
+
+@section('content_header')
+    <h1>View {{modelName}}</h1>
+@stop
+
+@section('content')
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">{{modelName}} Details</h3>
+            <div class="card-tools">
+                <a href="{{ route('{{routePrefix}}.edit', ${{modelVariable}}->id) }}" class="btn btn-warning">
+                    <i class="fas fa-edit"></i> Edit
+                </a>
+                <a href="{{ route('{{routePrefix}}.index') }}" class="btn btn-default">
+                    <i class="fas fa-arrow-left"></i> Back
+                </a>
+            </div>
+        </div>
+        <div class="card-body">
+            <table class="table table-bordered">
+                <tbody>
+                    <tr>
+                        <th style="width: 200px">ID</th>
+                        <td>{{ ${{modelVariable}}->id }}</td>
+                    </tr>
+                    {{detailRows}}
+                    <tr>
+                        <th>Created At</th>
+                        <td>{{ ${{modelVariable}}->created_at }}</td>
+                    </tr>
+                    <tr>
+                        <th>Updated At</th>
+                        <td>{{ ${{modelVariable}}->updated_at }}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+@stop
