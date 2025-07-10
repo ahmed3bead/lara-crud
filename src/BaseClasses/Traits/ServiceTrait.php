@@ -1,9 +1,9 @@
 <?php
 
-namespace Ahmed3bead\LaraCrud\BaseClasses\traits;
+namespace Ahmed3bead\LaraCrud\BaseClasses\Traits;
 
 use Ahmed3bead\LaraCrud\BaseClasses\BaseResponse;
-use Ahmed3bead\LaraCrud\BaseClasses\HttpStatus;
+use Ahmed3bead\LaraCrud\BaseClasses\Enums\HttpStatus;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
@@ -13,7 +13,7 @@ trait ServiceTrait
 
     private array $errors = []; // Define $errors property
 
-    protected function response($statusCode = HttpStatus::HTTP_OK): BaseResponse|JsonResponse
+    protected function response($statusCode = HttpStatus::OK): BaseResponse|JsonResponse
     {
         return ( new BaseResponse($statusCode))
             ->setErrors($this->getErrors());
@@ -21,15 +21,15 @@ trait ServiceTrait
 
     public function setResponse($data)
     {
-        return $this->response()->setData($data)->setStatusCode(HttpStatus::HTTP_OK);
+        return $this->response()->setData($data)->setStatusCode(HttpStatus::OK);
     }
 
-    public function setErrorResponse($message = "", $status = HttpStatus::HTTP_ERROR): JsonResponse
+    public function setErrorResponse($message = "", $status = HttpStatus::INTERNAL_SERVER_ERROR): JsonResponse
     {
         return $this->response()->setErrors(['message' => $message])->setMessage($message)->setStatusCode($status)->json();
     }
 
-    public function setSuccessResponse($message = "", $status = HttpStatus::HTTP_OK): JsonResponse
+    public function setSuccessResponse($message = "", $status = HttpStatus::OK): JsonResponse
     {
         return $this->response()->setErrors(['message' => $message])->setMessage($message)->setStatusCode($status)->json();
     }
@@ -46,7 +46,7 @@ trait ServiceTrait
                 'perPage' => $paginator->perPage(),
                 'total' => $paginator->total(),
             ])
-            ->setStatusCode(HttpStatus::HTTP_OK);
+            ->setStatusCode(HttpStatus::OK);
     }
 
     /**
@@ -66,7 +66,7 @@ trait ServiceTrait
         }
     }
 
-    public function setMessageResponse($message, $status = HttpStatus::HTTP_ERROR): JsonResponse
+    public function setMessageResponse($message, $status = HttpStatus::INTERNAL_SERVER_ERROR): JsonResponse
     {
         return $this->response()
             ->setData(['message' => $message])
@@ -100,11 +100,11 @@ trait ServiceTrait
 
     public function readApiResponse($data)
     {
-        if ($data['status_code'] == HttpStatus::HTTP_OK) {
+        if ($data['status_code'] == HttpStatus::OK) {
             return $this->setResponse($data['data'])->setMeta($data['meta'] ?? null);
-        } elseif (isset($data['errors']) && $data['status_code'] == HttpStatus::HTTP_VALIDATION_ERROR) {
+        } elseif (isset($data['errors']) && $data['status_code'] == HttpStatus::UNPROCESSABLE_ENTITY) {
             return $this->response()->setErrors($data['errors'])->setStatusCode($data['status_code'])->json();
-        } elseif (isset($data['errors']) && $data['status_code'] == HttpStatus::HTTP_ERROR) {
+        } elseif (isset($data['errors']) && $data['status_code'] == HttpStatus::INTERNAL_SERVER_ERROR) {
             return $this->response()->setErrors($data['errors'])->setStatusCode($data['status_code'])->json();
         } else {
             return $this->response()->setData($data)->setStatusCode($data['status_code'])->json();

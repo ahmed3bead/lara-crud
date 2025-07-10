@@ -1,14 +1,18 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Ahmed3bead\LaraCrud\BaseClasses;
 
-use Ahmed3bead\LaraCrud\BaseClasses\traits\BaseScopes;
-use Ahmed3bead\LaraCrud\BaseClasses\traits\CanSaveQuietly;
-
+use Ahmed3bead\LaraCrud\BaseClasses\Traits\BaseScopes;
+use Ahmed3bead\LaraCrud\BaseClasses\Traits\CanSaveQuietly;
+use Ahmed3bead\LaraCrud\BaseClasses\Traits\HasFlexibleId;
+use Ahmed3bead\LaraCrud\BaseClasses\Traits\HasQueryBuilderSupport;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
+use Spatie\QueryBuilder\AllowedFilter;
+use Spatie\QueryBuilder\AllowedSort;
 
 /**
  * @method static Builder where($column, $operator = null, $value = null)
@@ -29,226 +33,373 @@ use Illuminate\Support\Carbon;
  * @method static Builder addSelect($column)
  * @method static Builder selectRaw($expression, array $bindings = [])
  * @method static Builder distinct()
- * @method static Builder from($table)
+ * @method static Builder from($table, $as = null)
  * @method static Builder join($table, $first, $operator = null, $second = null, $type = 'inner', $where = false)
  * @method static Builder leftJoin($table, $first, $operator = null, $second = null)
  * @method static Builder rightJoin($table, $first, $operator = null, $second = null)
- * @method static Builder crossJoin($table, $first, $operator = null, $second = null)
- * @method static Builder whereJoin($table, $first, $operator = null, $second = null)
- * @method static Builder orderBy($column, $direction = 'asc')
- * @method static Builder latest($column = 'created_at')
- * @method static Builder oldest($column = 'created_at')
- * @method static Builder groupBy($groups)
- * @method static Builder having($column, $operator = null, $value = null, $boolean = 'and')
- * @method static Builder orHaving($column, $operator = null, $value = null)
- * @method static Builder havingRaw($sql, $bindings = [], $boolean = 'and')
- * @method static Builder orHavingRaw($sql, $bindings = [])
- * @method static Builder skip($value)
- * @method static Builder offset($value)
- * @method static Builder take($value)
- * @method static Builder limit($value)
- * @method static Builder forPage($page, $perPage = 15)
- * @method static Builder offsetExists($key)
- * @method static Builder find($id, $columns = ['*'])
- * @method static Builder findOrFail($id, $columns = ['*'])
- * @method static Builder first($columns = ['*'])
- * @method static Builder firstOrFail($columns = ['*'])
- * @method static Builder firstOr($columns = ['*'], \Closure $callback = null)
- * @method static Builder value($column)
- * @method static Builder pluck($column, $key = null)
- * @method static Builder count($columns = '*')
- * @method static Builder min($column)
- * @method static Builder max($column)
- * @method static Builder sum($column)
- * @method static Builder avg($column)
- * @method static Builder exists()
- * @method static Builder doesntExist()
- * @method static Builder toSql()
- * @method static Builder findMany($ids, $columns = ['*'])
- * @method static Builder findOrNew($id, $columns = ['*'])
- * @method static Builder firstOrCreate(array $attributes, array $values = [])
- * @method static Builder updateOrCreate(array $attributes, array $values = [])
- * @method static Builder insert(array $values)
- * @method static Builder insertOrIgnore(array $values)
- * @method static Builder insertGetId(array $values, $sequence = null)
- * @method static Builder update(array $values)
- * @method static Builder forceFill(array $values)
- * @method static Builder fill(array $values)
- * @method static Builder increment($column, $amount = 1, array $extra = [])
- * @method static Builder decrement($column, $amount = 1, array $extra = [])
- * @method static Builder delete()
- * @method static Builder truncate()
- * @method static Builder chunk($count, callable $callback)
- * @method static Builder chunkById($count, callable $callback, $column = 'id', $alias = null)
- * @method static Builder tap($callback)
- * @method static Builder when($value, $callback, $default = null)
- * @method static Builder unless($value, $callback, $default = null)
- * @method static Builder whenNotEmpty($value, $callback, $default = null)
- * @method static Builder pipe($callback)
- * @method static Builder unlessEmpty($value, $callback, $default = null)
- * @method static Builder unlessNotEmpty($value, $callback, $default = null)
- * @method static Builder getBindings()
- * @method static Builder chunkWhile(callable $callback, $count = 1000)
- * @method static Builder lock($value = true)
- * @method static Builder lockForUpdate()
- * @method static Builder sharedLock()
- * @method static Builder toBase()
- * @method static Builder useWritePdo()
- * @method static Builder without($columns)
- * @method static Builder withoutGlobalScope($scope)
- * @method static Builder withoutGlobalScopes(array $scopes = null)
- * @method static Builder withoutTouching()
- * @method static Builder withoutTrashed()
- * @method static Builder withoutTimestamps()
+ * @method static Builder crossJoin($table, $first = null, $operator = null, $second = null)
  * @method static Builder with($relations)
  * @method static Builder withCount($relations)
- * @method static Builder withGlobalScope($identifier, \Illuminate\Database\Eloquent\Scope $scope)
- * @method static Builder withGlobalScopes(array $scopes)
- * @method static Builder withTrashed()
- * @method static Builder withTimestamps()
- * @method static Builder addBinding($value, $type = 'where')
- * @method static Builder setBindings(array $bindings, $type = 'where')
- * @method static Builder mergeBindings(\Illuminate\Database\Query\Builder $query)
- * @method static Builder joinWhere($table, $first, $operator, $second, $type = 'inner')
- * @method static Builder leftJoinWhere($table, $first, $operator, $second)
- * @method static Builder rightJoinWhere($table, $first, $operator, $second)
- * @method static Builder orWhereColumn($first, $operator = null, $second = null)
- * @method static Builder orWhereRaw($sql, $bindings = [])
- * @method static Builder whereRaw($sql, $bindings = [], $boolean = 'and')
- * @method static Builder whereSub($column, $operator, \Closure $callback, $boolean = 'and')
- * @method static Builder orWhereSub($column, $operator, \Closure $callback)
- * ... // Add more Eloquent methods here as needed
+ * @method static Builder has($relation, $operator = '>=', $count = 1, $boolean = 'and', Closure $callback = null)
+ * @method static Builder doesntHave($relation, $boolean = 'and', Closure $callback = null)
+ * @method static Builder whereHas($relation, Closure $callback = null, $operator = '>=', $count = 1)
+ * @method static Builder whereDoesntHave($relation, Closure $callback = null)
+ * @method static Builder withoutGlobalScopes(array $scopes = null)
+ * @method static Builder withoutGlobalScope($scope)
+ * @method static Builder orderBy($column, $direction = 'asc')
+ * @method static Builder orderByDesc($column)
+ * @method static Builder latest($column = null)
+ * @method static Builder oldest($column = null)
+ * @method static Builder inRandomOrder($seed = '')
+ * @method static Builder groupBy(...$groups)
+ * @method static Builder having($column, $operator = null, $value = null, $boolean = 'and')
+ * @method static Builder orHaving($column, $operator = null, $value = null)
+ * @method static Builder limit($value)
+ * @method static Builder take($value)
+ * @method static Builder skip($value)
+ * @method static Builder offset($value)
+ * @method static Builder forPage($page, $perPage = 15)
+ * @method static Builder when($value, $callback, $default = null)
+ * @method static Builder unless($value, $callback, $default = null)
+ * @method static Builder whereKey($id)
+ * @method static Builder whereKeyNot($id)
+ * @method static Model|null find($id, $columns = ['*'])
+ * @method static Collection findMany($ids, $columns = ['*'])
+ * @method static Model findOrFail($id, $columns = ['*'])
+ * @method static Model firstOrFail($columns = ['*'])
+ * @method static Model|null first($columns = ['*'])
+ * @method static Collection get($columns = ['*'])
+ * @method static mixed value($column)
+ * @method static Collection pluck($column, $key = null)
+ * @method static LengthAwarePaginator paginate($perPage = null, $columns = ['*'], $pageName = 'page', $page = null)
+ * @method static Paginator simplePaginate($perPage = null, $columns = ['*'], $pageName = 'page', $page = null)
+ * @method static int count($columns = '*')
+ * @method static mixed min($column)
+ * @method static mixed max($column)
+ * @method static mixed sum($column)
+ * @method static mixed avg($column)
+ * @method static mixed average($column)
+ * @method static mixed aggregate($function, $columns = ['*'])
+ * @method static bool exists()
+ * @method static bool doesntExist()
+ * @method static Model create(array $attributes = [])
+ * @method static Model forceCreate(array $attributes)
+ * @method static int update(array $values)
+ * @method static int delete()
+ * @method static mixed forceDelete()
+ * @method static int restore()
  *
- *
- * @property mixed $id
- * @property mixed $created_at
- * @property mixed $updated_at
+ * @property Carbon $created_at
+ * @property Carbon $updated_at
  */
 abstract class BaseModel extends Model
 {
-    use CanSaveQuietly;
-    use HasUlids;
-    use BaseScopes;
+    use BaseScopes,
+        CanSaveQuietly,
+        HasFlexibleId,
+        HasQueryBuilderSupport;
 
-    /**
-     * Specify the amount of time to cache queries.
-     * Do not specify or set it to null to disable caching.
-     *
-     * @var int|\DateTime
-     */
-    public $cacheFor = 43200; // cache time, in seconds
-    /**
-     * Invalidate the cache automatically
-     * upon update in the database.
-     *
-     * @var bool
-     */
-    protected static $flushCacheOnUpdate = true;
-
-    public $perPage = 20;
-
-    protected $guard_name = 'api';
-
-    public static function selector(): BaseDBSelect
-    {
-        return new BaseDBSelect();
-    }
-
-    public static function getAllowedFilters(): array
-    {
-        return [];
-    }
-
-    public static function allowedIncludes(): array
-    {
-        return [];
-    }
-
-    public static function getDefaultSort()
-    {
-        if (request('sortAsc', false)) {
-            return 'created_at';
-        } else {
-            return '-created_at';
-        }
-    }
-
-    public static function getAllowedSorts()
-    {
-        if (request('sortAsc', false)) {
-            return 'created_at';
-        } else {
-            return '-created_at';
-        }
-    }
-
-    public static function getAllowedIncludes(): array
-    {
-        return [];
-    }
-
-    public static function getDefaultIncludedRelations(): array
-    {
-        return [];
-    }
-
-    public static function getDefaultIncludedRelationsCount(): array
-    {
-        return [];
-    }
-
-    public static function getAllowedFields(): array
-    {
-        return [];
-    }
-
-    /**
-     * Scope a query to only get listing.
-     *
-     * @param Builder $query
-     * @param array $listFields
-     * @return Builder
-     */
-    public function scopeListing(
-        Builder $query,
-        array $listFields = ['id', 'title']
-    ): Builder {
-        return $query->select($listFields);
-    }
+    protected $guarded = ['id'];
 
     /**
      * The attributes that should be cast to native types.
-     *
-     * @var array
      */
     protected $casts = [
-        'created_at' => 'datetime:Y-m-d H:i:s',
-        'updated_at' => 'datetime:Y-m-d H:i:s',
-        'deleted_at' => 'datetime:Y-m-d H:i:s',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
     ];
 
-    public function localTimezone($value = null)
+    /**
+     * Default allowed filters for Spatie QueryBuilder
+     * Override in child classes to customize
+     */
+    protected array $allowedFilters = [];
+
+    /**
+     * Default allowed sorts for Spatie QueryBuilder
+     * Override in child classes to customize
+     */
+    protected array $allowedSorts = [];
+
+    /**
+     * Default allowed includes for Spatie QueryBuilder
+     * Override in child classes to customize
+     */
+    protected array $allowedIncludes = [];
+
+    /**
+     * Default allowed fields for Spatie QueryBuilder
+     * Override in child classes to customize
+     */
+    protected array $allowedFields = [];
+
+    /**
+     * Default allowed appends for Spatie QueryBuilder
+     * Override in child classes to customize
+     */
+    protected array $allowedAppends = [];
+
+    /**
+     * Default sort configuration
+     * Can be string like '-created_at' or array like ['created_at' => 'desc']
+     */
+    protected array|string $defaultSort = '-created_at';
+
+    /**
+     * Searchable fields for global search
+     */
+    protected array $searchableFields = [];
+
+    /**
+     * Get allowed filters for QueryBuilder
+     */
+    public function getAllowedFilters(): array
     {
-        return $value ? Carbon::parse($value)->setTimezone(env("APP_TIMEZONE"))->toDateTimeString() : null;
+        if (!empty($this->allowedFilters)) {
+            return $this->allowedFilters;
+        }
+
+        // Auto-generate basic filters
+        return [
+            AllowedFilter::exact('id'),
+            AllowedFilter::partial('name'),
+            AllowedFilter::partial('title'),
+            AllowedFilter::partial('description'),
+            AllowedFilter::callback('search', [$this, 'scopeSearch']),
+            AllowedFilter::scope('created_from'),
+            AllowedFilter::scope('created_to'),
+            AllowedFilter::scope('is_active'),
+            AllowedFilter::scope('is_parent'),
+            AllowedFilter::exact('status'),
+            AllowedFilter::exact('type'),
+            ...$this->getCustomFilters(),
+        ];
     }
 
-
-
-    public function belongsToThrough($related, $through, $firstKey = null, $secondKey = null, $localKey = null, $throughKey = null)
+    /**
+     * Get allowed sorts for QueryBuilder
+     */
+    public function getAllowedSorts(): array
     {
-        $firstKey = $firstKey ?: $through::getForeignKey();
-        $secondKey = $secondKey ?: $related::getForeignKey();
-        $localKey = $localKey ?: $this->getKeyName();
-        $throughKey = $throughKey ?: $through::getForeignKey();
+        if (!empty($this->allowedSorts)) {
+            return $this->allowedSorts;
+        }
 
-        return $this->hasOne($related, $secondKey, $throughKey)
-            ->where($through.'.'.$localKey, $this->getKey());
+        // Auto-generate basic sorts
+        $basicSorts = [
+            AllowedSort::field('id'),
+            AllowedSort::field('created_at'),
+            AllowedSort::field('updated_at'),
+        ];
+
+        // Add name/title sorting if columns exist
+        if ($this->hasColumn('name')) {
+            $basicSorts[] = AllowedSort::field('name');
+        }
+
+        if ($this->hasColumn('title')) {
+            $basicSorts[] = AllowedSort::field('title');
+        }
+
+        if ($this->hasColumn('order')) {
+            $basicSorts[] = AllowedSort::field('order');
+        }
+
+        return array_merge($basicSorts, $this->getCustomSorts());
     }
 
-    public function scopeGetParentsOnly(Builder $query)
+    /**
+     * Get allowed includes for QueryBuilder
+     */
+    public function getAllowedIncludes(): array
     {
-        return $query->whereNull('parent_id');
+        if (!empty($this->allowedIncludes)) {
+            return $this->allowedIncludes;
+        }
+
+        // Auto-generate from relationships (you can override this)
+        return $this->getCustomIncludes();
     }
 
+    /**
+     * Get allowed fields for QueryBuilder
+     */
+    public function getAllowedFields(): array
+    {
+        if (!empty($this->allowedFields)) {
+            return $this->allowedFields;
+        }
 
+        // Return all fillable fields by default, plus timestamps
+        return array_merge(
+            $this->getFillable(),
+            ['id', 'created_at', 'updated_at'],
+            $this->getCustomFields()
+        );
+    }
+
+    /**
+     * Get allowed appends for QueryBuilder
+     */
+    public function getAllowedAppends(): array
+    {
+        if (!empty($this->allowedAppends)) {
+            return $this->allowedAppends;
+        }
+
+        return $this->getCustomAppends();
+    }
+
+    /**
+     * Get default sort for QueryBuilder
+     */
+    public function getDefaultSort(): array|string
+    {
+        return $this->defaultSort;
+    }
+
+    /**
+     * Get searchable fields
+     */
+    public function getSearchableFields(): array
+    {
+        if (!empty($this->searchableFields)) {
+            return $this->searchableFields;
+        }
+
+        // Auto-detect searchable fields
+        $searchable = [];
+
+        foreach (['name', 'title', 'description', 'email', 'slug'] as $field) {
+            if ($this->hasColumn($field)) {
+                $searchable[] = $field;
+            }
+        }
+
+        return $searchable;
+    }
+
+    /**
+     * Search scope for global search functionality
+     */
+    public function scopeSearch(Builder $query, string $search): Builder
+    {
+        $searchableFields = $this->getSearchableFields();
+
+        if (empty($searchableFields)) {
+            return $query;
+        }
+
+        return $query->where(function (Builder $q) use ($search, $searchableFields) {
+            foreach ($searchableFields as $index => $field) {
+                $method = $index === 0 ? 'where' : 'orWhere';
+
+                // Handle JSON fields
+                if ($this->isJsonField($field)) {
+                    $q->{$method}(function (Builder $subQuery) use ($field, $search) {
+                        $subQuery->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(`{$field}`, '$.en')) LIKE ?", ["%{$search}%"])
+                            ->orWhereRaw("JSON_UNQUOTE(JSON_EXTRACT(`{$field}`, '$.ar')) LIKE ?", ["%{$search}%"]);
+                    });
+                } else {
+                    $q->{$method}($field, 'LIKE', "%{$search}%");
+                }
+            }
+        });
+    }
+
+    /**
+     * Check if a column exists in the table
+     */
+    protected function hasColumn(string $column): bool
+    {
+        static $columns = [];
+
+        if (!isset($columns[$this->getTable()])) {
+            $columns[$this->getTable()] = $this->getConnection()
+                ->getSchemaBuilder()
+                ->getColumnListing($this->getTable());
+        }
+
+        return in_array($column, $columns[$this->getTable()]);
+    }
+
+    /**
+     * Check if a field is a JSON field
+     */
+    protected function isJsonField(string $field): bool
+    {
+        return in_array($field, $this->getCasts()) &&
+            in_array($this->getCasts()[$field], ['json', 'array', 'object']);
+    }
+
+    /**
+     * Get custom filters - override in child classes
+     */
+    protected function getCustomFilters(): array
+    {
+        return [];
+    }
+
+    /**
+     * Get custom sorts - override in child classes
+     */
+    protected function getCustomSorts(): array
+    {
+        return [];
+    }
+
+    /**
+     * Get custom includes - override in child classes
+     */
+    protected function getCustomIncludes(): array
+    {
+        return [];
+    }
+
+    /**
+     * Get custom fields - override in child classes
+     */
+    protected function getCustomFields(): array
+    {
+        return [];
+    }
+
+    /**
+     * Get custom appends - override in child classes
+     */
+    protected function getCustomAppends(): array
+    {
+        return [];
+    }
+
+    /**
+     * Scope for filtering by status
+     */
+    public function scopeStatus(Builder $query, string $status): Builder
+    {
+        return $query->where('status', $status);
+    }
+
+    /**
+     * Scope for filtering by type
+     */
+    public function scopeType(Builder $query, string $type): Builder
+    {
+        return $query->where('type', $type);
+    }
+
+    /**
+     * Boot the model
+     */
+    protected static function boot(): void
+    {
+        parent::boot();
+
+        // Auto-set order field if it exists
+        static::creating(function (Model $model) {
+            if ($model->hasColumn('order') && !$model->order) {
+                $model->order = static::max('order') + 1;
+            }
+        });
+    }
 }

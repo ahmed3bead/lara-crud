@@ -1,6 +1,6 @@
 <?php
 
-namespace Ahmed3bead\LaraCrud\BaseClasses\traits;
+namespace Ahmed3bead\LaraCrud\BaseClasses\Traits;
 
 trait CanSaveQuietly
 {

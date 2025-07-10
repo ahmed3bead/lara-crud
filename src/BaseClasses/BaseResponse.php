@@ -1,270 +1,196 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Ahmed3bead\LaraCrud\BaseClasses;
 
+use Ahmed3bead\LaraCrud\BaseClasses\Enums\HttpStatus;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Http\Resources\Json\ResourceCollection;
 use JsonSerializable;
-use stdClass;
 
-class BaseResponse implements JsonSerializable
+class BaseResponse implements JsonSerializable, Arrayable
 {
-    /**
-     * @var int
-     */
-    private $statusCode = 200;
+    public function __construct(
+        private mixed $data = null,
+        private ?string $message = null,
+        private HttpStatus $status = HttpStatus::OK,
+        private array $errors = [],
+        private array $meta = [],
+        private array $links = []
+    ) {}
 
-    /**
-     * @var mixed
-     */
-    private mixed $errors = null;
-
-    /**
-     * @var mixed
-     */
-    private $data = null;
-
-    private $extraData = null;
-
-    /**
-     * @var mixed
-     */
-    private $meta = null;
-
-    /**
-     * @var mixed
-     */
-    private $debug = null;
-
-    /**
-     * @var array
-     */
-    private $headers = [];
-
-    /**
-     * @var string
-     */
-    private $message = "";
-
-    /**
-     * @var string
-     */
-    private string $source = 'OPs';
-
-    public function __construct($statusCode = 200, $data = null)
-    {
-        $this->statusCode = $statusCode;
-        $this->setStatusCode($statusCode);
-        $this->data = $data ?? new stdClass();
-        $this->errors = new stdClass();
-    }
-
-    /**
-     * build and return the json response.
-     *
-     * @return JsonResponse
-     */
-    public function json()
-    {
-        return \response()->json(
-            [
-                'status_code' => $this->getStatusCode(),
-                'errors' => $this->getErrors() ?? (new stdClass()),
-                'data' => $this->getData() ?? (new stdClass()),
-                'extra_data' => $this->getExtraData() ?? (new stdClass()),
-                'message' => $this->getMessage(),
-                'source' => $this->getSource(),
-            ],
-            $this->getStatusCode(),
-            $this->getHeaders()
+    public static function success(
+        mixed $data = null,
+        ?string $message = null,
+        HttpStatus $status = HttpStatus::OK
+    ): self {
+        return new self(
+            data: $data,
+            message: $message,
+            status: $status
         );
     }
 
-    /**
-     * @return int
-     */
-    public function getStatusCode(): int
-    {
-        return $this->statusCode;
+    public static function error(
+        string|array $errors,
+        ?string $message = null,
+        HttpStatus $status = HttpStatus::BAD_REQUEST
+    ): self {
+        $errorArray = is_string($errors) ? ['message' => $errors] : $errors;
+
+        return new self(
+            message: $message,
+            status: $status,
+            errors: $errorArray
+        );
     }
 
-    /**
-     * @param int $statusCode
-     *
-     * @return BaseResponse
-     */
-    public function setStatusCode(int $statusCode): self
-    {
-        $this->statusCode = $statusCode;
-
-        return $this;
+    public static function validationError(
+        array $errors,
+        ?string $message = 'Validation failed'
+    ): self {
+        return new self(
+            message: $message,
+            status: HttpStatus::UNPROCESSABLE_ENTITY,
+            errors: $errors
+        );
     }
 
-    public function getErrors(): mixed
-    {
-        if (is_array($this->errors) && empty($this->errors)) {
-            $this->errors = new stdClass();
+    public static function paginated(
+        LengthAwarePaginator $paginator,
+        ?string $message = null
+    ): self {
+        return new self(
+            data: $paginator->items(),
+            message: $message,
+            status: HttpStatus::OK,
+            meta: [
+                'current_page' => $paginator->currentPage(),
+                'last_page' => $paginator->lastPage(),
+                'per_page' => $paginator->perPage(),
+                'total' => $paginator->total(),
+                'from' => $paginator->firstItem(),
+                'to' => $paginator->lastItem(),
+            ],
+            links: [
+                'first' => $paginator->url(1),
+                'last' => $paginator->url($paginator->lastPage()),
+                'prev' => $paginator->previousPageUrl(),
+                'next' => $paginator->nextPageUrl(),
+            ]
+        );
+    }
+
+    public static function resource(
+        JsonResource|ResourceCollection $resource,
+        ?string $message = null,
+        HttpStatus $status = HttpStatus::OK
+    ): self {
+        if ($resource instanceof ResourceCollection && $resource->resource instanceof LengthAwarePaginator) {
+            return self::paginated($resource->resource, $message);
         }
 
-        return is_string($this->errors) ? (object)['error' => $this->errors] : $this->errors;
+        return new self(
+            data: $resource,
+            message: $message,
+            status: $status
+        );
     }
 
-    public function setErrors(mixed $errors): self
+    public function withMeta(array $meta): self
     {
-        $this->errors = $errors;
-
+        $this->meta = array_merge($this->meta, $meta);
         return $this;
     }
 
-    /**
-     * @return mixed
-     */
+    public function withLinks(array $links): self
+    {
+        $this->links = array_merge($this->links, $links);
+        return $this;
+    }
+
+    public function toJson(): JsonResponse
+    {
+        return response()->json($this->toArray(), $this->status->value);
+    }
+
+    public function toArray(): array
+    {
+        $response = [
+            'success' => $this->status->isSuccess(),
+            'status_code' => $this->status->value,
+        ];
+
+        if ($this->message !== null) {
+            $response['message'] = $this->message;
+        }
+
+        if ($this->data !== null) {
+            $response['data'] = $this->data;
+        }
+
+        if (!empty($this->errors)) {
+            $response['errors'] = $this->errors;
+        }
+
+        if (!empty($this->meta)) {
+            $response['meta'] = $this->meta;
+        }
+
+        if (!empty($this->links)) {
+            $response['links'] = $this->links;
+        }
+
+        return $response;
+    }
+
+    public function jsonSerialize(): array
+    {
+        return $this->toArray();
+    }
+
+    // Getters
     public function getData(): mixed
     {
         return $this->data;
     }
 
-    /**
-     * @param mixed $data
-     *
-     * @return BaseResponse
-     */
-    public function setData(mixed $data): self
-    {
-        $this->data = $data;
-
-        return $this;
-    }
-
-    /**
-     * @return null
-     */
-    public function getExtraData()
-    {
-        return $this->extraData;
-    }
-
-    /**
-     * @param null $extraData
-     */
-    public function setExtraData($extraData): void
-    {
-        $this->extraData = $extraData;
-    }
-
-    /**
-     * @return string
-     */
-    public function getMessage(): string
+    public function getMessage(): ?string
     {
         return $this->message;
     }
 
-    /**
-     * @param string $message
-     *
-     * @return BaseResponse
-     */
-    public function setMessage(string $message): self
+    public function getStatus(): HttpStatus
     {
-        $this->message = $message;
-
-        return $this;
+        return $this->status;
     }
 
-    /**
-     * @return string
-     */
-    public function getSource(): string
+    public function getErrors(): array
     {
-        return $this->source;
+        return $this->errors;
     }
 
-    /**
-     * @param string $source
-     *
-     * @return BaseResponse
-     */
-    public function setSource(string $source): self
-    {
-        $this->source = $source;
-
-        return $this;
-    }
-
-    /**
-     * @return array
-     */
-    public function getHeaders(): array
-    {
-        return $this->headers;
-    }
-
-    /**
-     * @param array $headers
-     *
-     * @return BaseResponse
-     */
-    public function setHeaders(array $headers): self
-    {
-        $this->headers = $headers;
-
-        return $this;
-    }
-
-    /**
-     * return the data that can be serialized as json.
-     */
-    public function jsonSerialize(): array
-    {
-        $return_data = [
-            'status_code' => $this->getStatusCode(),
-            'errors' => $this->getErrors() ?? (new stdClass()),
-            'data' => $this->getData() ?? (new stdClass()),
-            'extra_data' => $this->getExtraData() ?? (new stdClass()),
-            'meta' => $this->getMeta() ?? (new stdClass()),
-            'message' => $this->getMessage(),
-            'source' => $this->getSource(),
-        ];
-        if (env('APP_DEBUG', false)) {
-            $return_data += ['debug' => $this->getDebug()];
-        }
-
-        return $return_data;
-    }
-
-    /**
-     * @return mixed
-     */
-    public function getMeta(): mixed
+    public function getMeta(): array
     {
         return $this->meta;
     }
 
-    /**
-     * @param mixed $data
-     *
-     * @return BaseResponse
-     */
-    public function setMeta(mixed $meta): self
+    public function getLinks(): array
     {
-        $this->meta = $meta;
-
-        return $this;
+        return $this->links;
     }
 
-    /**
-     * @return array
-     */
-    public function getDebug(): array
+    public function isSuccess(): bool
     {
-        $collect = collect(DB::getQueryLog());
+        return $this->status->isSuccess();
+    }
 
-        return [
-            'count' => $collect->count(),
-            'total_time' => $collect->sum('time'),
-            'biggest_time' => $collect->max('time'),
-            'queries' => $collect->toArray(),
-        ];
+    public function isError(): bool
+    {
+        return !$this->status->isSuccess();
     }
 }

@@ -2,8 +2,8 @@
 
 namespace Ahmed3bead\LaraCrud\BaseClasses;
 
-use Ahmed3bead\LaraCrud\BaseClasses\traits\BaseScopes;
-use Ahmed3bead\LaraCrud\BaseClasses\traits\CanSaveQuietly;
+use Ahmed3bead\LaraCrud\BaseClasses\Traits\BaseScopes;
+use Ahmed3bead\LaraCrud\BaseClasses\Traits\CanSaveQuietly;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;

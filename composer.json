@@ -1,17 +1,56 @@
 {
     "name": "ahmedebead/lara-crud",
-    "description": "A Laravel package to generate CRUD operations for APIs.",
+    "description": "A modern Laravel package to generate complete CRUD operations with multi-area authentication, advanced features, and modern UI frameworks.",
     "type": "library",
     "license": "MIT",
+    "keywords": ["laravel", "crud", "generator", "api", "admin", "multi-tenant", "sanctum"],
     "authors": [
         {
             "name": "Ahmed Ebead",
-            "email": "ahmedm3bead@gmail.com"
+            "email": "ahmedm3bead@gmail.com",
+            "homepage": "https://github.com/ahmedebead"
         }
     ],
+    "homepage": "https://github.com/ahmedebead/lara-crud",
+    "support": {
+        "issues": "https://github.com/ahmedebead/lara-crud/issues",
+        "source": "https://github.com/ahmedebead/lara-crud"
+    },
+    "require": {
+        "php": "^8.2|^8.3",
+        "laravel/framework": "^11.0",
+        "laravel/sanctum": "^4.0",
+        "spatie/laravel-query-builder": "^6.0",
+        "spatie/laravel-activitylog": "^4.8",
+        "spatie/laravel-medialibrary": "^11.0",
+        "spatie/laravel-permission": "^6.9",
+        "spatie/laravel-settings": "^3.3",
+        "spatie/laravel-translatable": "^6.7",
+        "bavix/laravel-wallet": "^11.0",
+        "doctrine/dbal": "^4.0",
+        "ramsey/uuid": "^4.7"
+    },
+    "require-dev": {
+        "pestphp/pest": "^2.0",
+        "pestphp/pest-plugin-laravel": "^2.0",
+        "larastan/larastan": "^2.9",
+        "nunomaduro/collision": "^8.0",
+        "spatie/laravel-ray": "^1.32",
+        "orchestra/testbench": "^9.0"
+    },
+    "suggest": {
+        "jeroennoten/laravel-adminlte": "^3.8 - Required for AdminLTE view generation",
+        "livewire/livewire": "^3.0 - For Livewire component generation",
+        "inertiajs/inertia-laravel": "^1.0 - For Inertia.js component generation"
+    },
     "autoload": {
         "psr-4": {
             "Ahmed3bead\\LaraCrud\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Ahmed3bead\\LaraCrud\\Tests\\": "tests/"
         }
     },
     "extra": {
@@ -19,14 +58,23 @@
             "providers": [
                 "Ahmed3bead\\LaraCrud\\LaraCrudServiceProvider"
             ]
+        },
+        "branch-alias": {
+            "dev-main": "3.x-dev"
         }
     },
-    "require": {
-        "php": "^8.0|^8.1|^8.2|^8.3",
-        "laravel/framework": "^9.0 || ^10.0|| ^11.0|| ^12.0",
-        "spatie/laravel-query-builder": "^4.0 || ^5.0 || ^6.0"
+    "config": {
+        "sort-packages": true,
+        "allow-plugins": {
+            "pestphp/pest-plugin": true
+        }
     },
-    "suggest": {
-        "jeroennoten/laravel-adminlte": "^3.8 - Required for AdminLTE view generation"
+    "minimum-stability": "stable",
+    "prefer-stable": true,
+    "scripts": {
+        "test": "vendor/bin/pest",
+        "test-coverage": "vendor/bin/pest --coverage",
+        "analyse": "vendor/bin/phpstan analyse",
+        "format": "vendor/bin/pint"
     }
 }

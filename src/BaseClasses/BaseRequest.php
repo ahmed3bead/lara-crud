@@ -2,7 +2,7 @@
 
 namespace Ahmed3bead\LaraCrud\BaseClasses;
 
-use Ahmed3bead\LaraCrud\BaseClasses\traits\RequestValidator;
+use Ahmed3bead\LaraCrud\BaseClasses\Traits\RequestValidator;
 use Illuminate\Foundation\Http\FormRequest;
 
 class BaseRequest extends FormRequest
