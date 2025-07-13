@@ -2,11 +2,8 @@
 
 namespace {{ DummyNamespace }};
 
-use App\BaseCode\Scopes\CompanyDataScope;
 use {{ _extendsNameSpace_ }} as ParentModel;
-use Illuminate\Database\Eloquent\Attributes\ScopedBy;
 
-#[ScopedBy([CompanyDataScope::class])]
 class {{ DummyClass }} extends ParentModel
 {
 

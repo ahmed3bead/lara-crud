@@ -416,7 +416,68 @@ class CrudBlueprintApiControllerCommand extends GeneratorCommand
         if (file_exists($filePath)) {
             File::delete([$filePath]);
         }
+        if (!file_exists($filePath) && is_dir($filePath)) {
+            mkdir($filePath, 0777, true);
+        }
         File::put($filePath, $content);
+    }
+
+    protected function generateApiResourceData($fieldList, $resourceType = 'show', $indent = '                ')
+    {
+        $items = [];
+
+        foreach ($fieldList as $k => $fieldData) {
+            // Skip certain fields based on resource type
+            if ($resourceType === 'list' && in_array($k, ['created_at', 'updated_at', 'deleted_at'])) {
+                continue;
+            }
+
+            if ($resourceType === 'index' && in_array($k, ['created_at', 'updated_at', 'deleted_at', 'description', 'content'])) {
+                continue;
+            }
+
+            // Different output based on field type
+            $fieldType = $fieldData['type'] ?? 'string';
+
+            switch ($fieldType) {
+                case 'datetime':
+                case 'timestamp':
+                    $items[] = "'{$k}' => \$this->{$k}?->format('Y-m-d H:i:s')";
+                    break;
+                case 'date':
+                    $items[] = "'{$k}' => \$this->{$k}?->format('Y-m-d')";
+                    break;
+                case 'boolean':
+                    $items[] = "'{$k}' => (bool) \$this->{$k}";
+                    break;
+                case 'integer':
+                case 'bigint':
+                    $items[] = "'{$k}' => (int) \$this->{$k}";
+                    break;
+                case 'float':
+                case 'decimal':
+                    $items[] = "'{$k}' => (float) \$this->{$k}";
+                    break;
+                case 'json':
+                case 'array':
+                    $items[] = "'{$k}' => \$this->{$k} ? json_decode(\$this->{$k}, true) : null";
+                    break;
+                default:
+                    $items[] = "'{$k}' => \$this->{$k}";
+            }
+        }
+
+        return $items;
+    }
+
+// Method to format for template placeholder
+    protected function formatApiResourceData($items, $indent = '                ')
+    {
+        if (empty($items)) {
+            return '';
+        }
+
+        return implode(",\n{$indent}", $items);
     }
 
     public function createRequests($PlaceHolders, $name, $modelName, $namespace_group = null, $requestsMainPath = null, $endpoint = null)

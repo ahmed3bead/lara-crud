@@ -1,32 +1,91 @@
 {
     "name": "ahmedebead/lara-crud",
-    "description": "A Laravel package to generate CRUD operations for APIs.",
+    "description": "A comprehensive Laravel package to generate CRUD operations with advanced features for APIs and web applications.",
     "type": "library",
+    "keywords": ["laravel", "crud", "api", "generator", "scaffold", "dto", "repository", "service"],
+    "homepage": "https://github.com/ahmedebead/lara-crud",
     "license": "MIT",
     "authors": [
         {
             "name": "Ahmed Ebead",
-            "email": "ahmedm3bead@gmail.com"
+            "email": "ahmedm3bead@gmail.com",
+            "homepage": "https://github.com/ahmedebead",
+            "role": "Developer"
         }
     ],
+    "support": {
+        "issues": "https://github.com/ahmedebead/lara-crud/issues",
+        "source": "https://github.com/ahmedebead/lara-crud"
+    },
+    "require": {
+        "php": "^8.1|^8.2|^8.3",
+        "laravel/framework": "^9.0 || ^10.0 || ^11.0 || ^12.0",
+        "spatie/laravel-query-builder": "^5.0 || ^6.0",
+        "illuminate/console": "^9.0 || ^10.0 || ^11.0 || ^12.0",
+        "illuminate/support": "^9.0 || ^10.0 || ^11.0 || ^12.0",
+        "doctrine/dbal": "^3.0"
+    },
+    "require-dev": {
+        "orchestra/testbench": "^7.0 || ^8.0 || ^9.0",
+        "phpunit/phpunit": "^9.0 || ^10.0 || ^11.0",
+        "pestphp/pest": "^1.0 || ^2.0",
+        "pestphp/pest-plugin-laravel": "^1.0 || ^2.0",
+        "mockery/mockery": "^1.4",
+        "fakerphp/faker": "^1.9.1",
+        "laravel/pint": "^1.0",
+        "phpstan/phpstan": "^1.0",
+        "rector/rector": "^0.15"
+    },
+    "suggest": {
+        "jeroennoten/laravel-adminlte": "^3.8 - Required for AdminLTE view generation",
+        "spatie/laravel-permission": "^5.0 - For role and permission management",
+        "spatie/laravel-activitylog": "^4.0 - For audit logging",
+        "spatie/laravel-medialibrary": "^10.0 - For file uploads and media management",
+        "spatie/laravel-backup": "^8.0 - For database backups",
+        "barryvdh/laravel-debugbar": "^3.0 - For debugging during development",
+        "laravel/telescope": "^4.0 - For application monitoring",
+        "laravel/horizon": "^5.0 - For queue monitoring",
+        "predis/predis": "^2.0 - For Redis caching support",
+        "pusher/pusher-php-server": "^7.0 - For real-time features",
+        "laravel/sanctum": "^3.0 - For API authentication",
+        "tymon/jwt-auth": "^2.0 - For JWT authentication",
+        "intervention/image": "^2.0 - For image processing",
+        "maatwebsite/excel": "^3.0 - For Excel import/export",
+        "barryvdh/laravel-dompdf": "^2.0 - For PDF generation"
+    },
     "autoload": {
         "psr-4": {
             "Ahmed3bead\\LaraCrud\\": "src/"
         }
     },
+    "autoload-dev": {
+        "psr-4": {
+            "Ahmed3bead\\LaraCrud\\Tests\\": "tests/"
+        }
+    },
+    "scripts": {
+        "test": "vendor/bin/pest",
+        "test-coverage": "vendor/bin/pest --coverage",
+        "analyse": "vendor/bin/phpstan analyse",
+        "format": "vendor/bin/pint",
+        "refactor": "vendor/bin/rector process"
+    },
     "extra": {
         "laravel": {
             "providers": [
                 "Ahmed3bead\\LaraCrud\\LaraCrudServiceProvider"
-            ]
+            ],
+            "aliases": {
+                "LaraCrud": "Ahmed3bead\\LaraCrud\\Facades\\LaraCrud"
+            }
         }
     },
-    "require": {
-        "php": "^8.0|^8.1|^8.2|^8.3",
-        "laravel/framework": "^9.0 || ^10.0|| ^11.0|| ^12.0",
-        "spatie/laravel-query-builder": "^4.0 || ^5.0 || ^6.0"
+    "config": {
+        "sort-packages": true,
+        "allow-plugins": {
+            "pestphp/pest-plugin": true
+        }
     },
-    "suggest": {
-        "jeroennoten/laravel-adminlte": "^3.8 - Required for AdminLTE view generation"
-    }
+    "minimum-stability": "dev",
+    "prefer-stable": true
 }

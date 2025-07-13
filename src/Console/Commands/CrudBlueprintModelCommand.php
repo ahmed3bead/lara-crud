@@ -333,6 +333,103 @@ EOD;
         File::put($modelPath, $content);
     }
 
+    protected function detectRelationsFromFields($fieldList)
+    {
+        $relations = [];
+
+        foreach ($fieldList as $field => $config) {
+            if (Str::endsWith($field, '_id')) {
+                $relationName = Str::replaceLast('_id', '', $field);
+                $relatedModel = Str::studly(Str::singular($relationName));
+
+                $relations[] = [
+                    'type' => 'belongsTo',
+                    'method_name' => Str::camel($relationName),
+                    'related_model' => $relatedModel,
+                    'foreign_key' => $field,
+                    'local_key' => 'id'
+                ];
+            }
+        }
+
+        return $relations;
+    }
+
+    protected function generateApiResourceDataWithRelations($fieldList, $relations = [], $resourceType = 'show')
+    {
+        $items = $this->generateApiResourceData($fieldList, $resourceType);
+
+        // Add relationships
+        foreach ($relations as $relation) {
+            $relationName = $relation['method_name'];
+            $relatedResourceClass = $relation['resource_class'] ?? null;
+
+            if ($relatedResourceClass) {
+                $items[] = "'{$relationName}' => new {$relatedResourceClass}(\$this->whenLoaded('{$relationName}'))";
+            } else {
+                $items[] = "'{$relationName}' => \$this->whenLoaded('{$relationName}')";
+            }
+        }
+
+        return $items;
+    }
+    protected function generateApiResourceData($fieldList, $resourceType = 'show', $indent = '                ')
+    {
+        $items = [];
+
+        foreach ($fieldList as $k => $fieldData) {
+            // Skip certain fields based on resource type
+            if ($resourceType === 'list' && in_array($k, ['created_at', 'updated_at', 'deleted_at'])) {
+                continue;
+            }
+
+            if ($resourceType === 'index' && in_array($k, ['created_at', 'updated_at', 'deleted_at', 'description', 'content'])) {
+                continue;
+            }
+
+            // Different output based on field type
+            $fieldType = $fieldData['type'] ?? 'string';
+
+            switch ($fieldType) {
+                case 'datetime':
+                case 'timestamp':
+                    $items[] = "'{$k}' => \$this->{$k}?->format('Y-m-d H:i:s')";
+                    break;
+                case 'date':
+                    $items[] = "'{$k}' => \$this->{$k}?->format('Y-m-d')";
+                    break;
+                case 'boolean':
+                    $items[] = "'{$k}' => (bool) \$this->{$k}";
+                    break;
+                case 'integer':
+                case 'bigint':
+                    $items[] = "'{$k}' => (int) \$this->{$k}";
+                    break;
+                case 'float':
+                case 'decimal':
+                    $items[] = "'{$k}' => (float) \$this->{$k}";
+                    break;
+                case 'json':
+                case 'array':
+                    $items[] = "'{$k}' => \$this->{$k} ? json_decode(\$this->{$k}, true) : null";
+                    break;
+                default:
+                    $items[] = "'{$k}' => \$this->{$k}";
+            }
+        }
+
+        return $items;
+    }
+
+// Method to format for template placeholder
+    protected function formatApiResourceData($items, $indent = '                ')
+    {
+        if (empty($items)) {
+            return '';
+        }
+
+        return implode(",\n{$indent}", $items);
+    }
     protected function generateResources($namespace_group = null, $endpoint = null)
     {
         $name = Str::studly($this->argument('name'));
@@ -370,6 +467,9 @@ EOD;
 //            '{{ SettersAndGetters }}' => $settersAndGetters,
 
         ];
+        $relations = $this->detectRelationsFromFields($fieldList);
+        $showResourceItems = $this->generateApiResourceDataWithRelations($fieldList,$relations, 'show');
+        $dtoPlaceHolders['{{ SerializedData }}']= $this->formatApiResourceData($showResourceItems);
 
         $stub = $this->files->get($this->getStub('show-resource'));
         foreach ($dtoPlaceHolders as $key => $vale) {
@@ -382,6 +482,9 @@ EOD;
 
         $Path = $resourcesFolder . ucfirst($modelName) . 'ShowResource' . '.php';
         $this->createFile($Path, $stub);
+        $showResourceItems = $this->generateApiResourceDataWithRelations($fieldList,$relations, 'list');
+
+        $dtoPlaceHolders['{{ SerializedData }}']= $this->formatApiResourceData($showResourceItems);
         $stub = $this->files->get($this->getStub('list-resource'));
         $dtoPlaceHolders['{{ _Class_Name_Plural_Top_ }}'] = ucfirst($modelName) . 'ListResource';
         foreach ($dtoPlaceHolders as $key => $vale) {
@@ -389,7 +492,8 @@ EOD;
         }
         $Path = $resourcesFolder . ucfirst($modelName) . 'ListResource' . '.php';
         $this->createFile($Path, $stub);
-
+        $showResourceItems = $this->generateApiResourceDataWithRelations($fieldList,$relations, 'index');
+        $dtoPlaceHolders['{{ SerializedData }}']= $this->formatApiResourceData($showResourceItems);
         $stub = $this->files->get($this->getStub('index-resource'));
         $dtoPlaceHolders['{{ _Class_Name_Plural_Top_ }}'] = ucfirst($modelName) . 'IndexResource';
         foreach ($dtoPlaceHolders as $key => $vale) {

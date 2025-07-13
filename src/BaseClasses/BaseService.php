@@ -3,21 +3,17 @@
 namespace Ahmed3bead\LaraCrud\BaseClasses;
 
 use Ahmed3bead\LaraCrud\BaseClasses\traits\ServiceTrait;
-use Illuminate\Support\Str;
-use Spatie\QueryBuilder\AllowedFilter;
-use Spatie\QueryBuilder\QueryBuilder;
 
-class BaseService
+abstract class BaseService
 {
     use ServiceTrait;
 
     private mixed $repository;
-    private mixed $mapper;
 
-    public function __construct($repository, $mapper)
+    public function __construct($repository)
     {
         $this->setRepository($repository);
-        $this->setMapper($mapper);
+
     }
 
     public function webPaginate($request)
@@ -51,35 +47,13 @@ class BaseService
 
     public function paginate($request)
     {
-        $response = $this->response();
-        if ($request->has('listing')) {
-            $data = $this->getRepository()->minimalListWithFilter();
-            $response->setData($data);
-            return $response->setStatusCode(HttpStatus::HTTP_OK);
-        } else {
-            $data = $this->getRepository()->paginate(
-                $request->query(),
-                $request->query('perPage')
-            );
-            $data = $this->getMapper()->fromPaginator($data);
-            return $response->setData($data['items'])->setMeta($data['meta'])->setStatusCode(HttpStatus::HTTP_OK);
-        }
+        $data = $this->getRepository()->paginate($request->query(), $request->query('perPage'));
+        $resourceData = $this->getResourceByType('list', $data);
+
+        return $this->response()->setData($resourceData)->setStatusCode(HttpStatus::HTTP_OK);
     }
 
-//    public function paginate($requestQuery, $perPage = 20)
-//    {
-//        return $this->getRepository()->paginate($requestQuery, $perPage);
-//    }
-
-    public function getMapper(): mixed
-    {
-        return $this->mapper;
-    }
-
-    public function setMapper(mixed $mapper): void
-    {
-        $this->mapper = $mapper;
-    }
+    abstract function getResourceByType(string $type = 'index', $data = null);
 
     public function webCreate($data)
     {
@@ -88,9 +62,10 @@ class BaseService
 
     public function create($data)
     {
+        $resourceData = $this->getResourceByType('show', $this->repository->create($data));
         return $this->response()
             ->setData(
-                $this->getMapper()->fromModel($this->getRepository()->create($data))
+                $resourceData
             )
             ->setStatusCode(HttpStatus::HTTP_OK);
     }
@@ -103,12 +78,19 @@ class BaseService
 
     public function update($data, $id)
     {
-        $model = $this->getRepository()->find($id);
+        $updated = $this->getRepository()->update($this->getRepository()->find($id), $data);
+        $resourceData = $this->getResourceByType('show', $updated->fresh());
         return $this->response()
             ->setData(
-                $this->getMapper()->fromModel($this->getRepository()->update($model, $data))
+                $resourceData
             )
             ->setStatusCode(HttpStatus::HTTP_OK);
+    }
+
+    public function webDelete($id)
+    {
+        $model = $this->getRepository()->find($id);
+        return $this->getRepository()->delete($model);
     }
 
     public function delete($id)
@@ -122,19 +104,12 @@ class BaseService
             ->setStatusCode(HttpStatus::HTTP_DELETED);
     }
 
-    public function webDelete($id)
-    {
-        $model = $this->getRepository()->find($id);
-        return $this->getRepository()->delete($model);
-    }
-
     public function show($id)
     {
-        return $this->response()
-            ->setData(
-                $this->getMapper()->fromModel($this->getRepository()->find($id))
-            )
-            ->setStatusCode(HttpStatus::HTTP_OK);
+        $model = $this->getRepository()->find($id);
+        $resourceData = $this->getResourceByType('show', $model);
+
+        return $this->response()->setData($resourceData)->setStatusCode(HttpStatus::HTTP_OK);
     }
 
     public function webShow($id)
@@ -142,100 +117,19 @@ class BaseService
         return $this->getRepository()->find($id);
     }
 
-    public function getGroupedListedData(array $modelConfig): array
+    public function webAll()
     {
-        foreach ($modelConfig as $config) {
-            $modelClass = $config['model'];
-            $labelField = $config['label_field'];
-            $where = $config['where'] ?? null;
-            $filterFields = $config['fields'];
-            $extraFields = $config['extra_fields'] ?? [];
-            $dynamicGroup = $config['dynamic_group'] ?? null;
-            $groupField = $config['group_field'] ?? null;
-
-            $query = $this->buildQuery($modelClass, $filterFields, $where);
-            $items = $query->get();
-
-            if ($groupField && $dynamicGroup) {
-                $this->processGroupedItems($items, $groupField, $labelField, $extraFields, $data);
-            } else {
-                $groupField = $groupField ?? ucfirst($modelClass);
-                $this->processNonGroupedItems($items, $groupField, $labelField, $extraFields, $data);
-            }
-        }
-
-        return $data;
-    }
-
-    private function buildQuery($modelClass, $filterFields, $where): QueryBuilder
-    {
-        $query = QueryBuilder::for($modelClass)
-            ->allowedFilters([
-                AllowedFilter::custom('keyword', new KeywordSearchFilter($filterFields)),
-            ]);
-
-        if ($where) {
-            $query->where($where);
-        }
-
-        return $query;
-    }
-
-    private function processGroupedItems($items, $groupField, $labelField, $extraFields, &$data)
-    {
-        $groupedItems = $items->groupBy($groupField);
-
-        foreach ($groupedItems as $group => $groupItems) {
-            $data[] = [
-                'label' => Str::studly($group),
-                'items' => $this->prepareItemsData($groupItems, $labelField, $extraFields),
-            ];
-        }
-    }
-
-    /**
-     * @param mixed $groupItems
-     * @param mixed $labelField
-     * @param mixed $extra_fields
-     * @return mixed
-     */
-    public function prepareItemsData(mixed $groupItems, mixed $labelField, mixed $extra_fields): mixed
-    {
-        return $groupItems->map(function ($item) use ($labelField, $extra_fields) {
-            $return = [
-                'label' => $item->{$labelField},
-                'value' => $item->id,
-            ];
-            if (!empty($extra_fields)) {
-                foreach ($extra_fields as $field) {
-                    $return[$field] = $item->{$field} ?? null;
-                }
-            }
-
-            return $return;
-        })->values()->all();
+        return  $this->getResourceByType('list', $this->getRepository()->all());
     }
 
     public function all()
     {
+        $resourceData = $this->getResourceByType('list', $this->getRepository()->all());
         return $this->response()
             ->setData(
-                $this->getMapper()->fromCollection($this->getRepository()->all())
+                $resourceData
             )
             ->setStatusCode(HttpStatus::HTTP_OK);
-    }
-
-    public function webAll()
-    {
-        return $this->getMapper()->fromCollection($this->getRepository()->all());
-    }
-
-    private function processNonGroupedItems($items, $groupField, $labelField, $extraFields, &$data)
-    {
-        $data[] = [
-            'label' => $groupField,
-            'items' => $this->prepareItemsData($items, $labelField, $extraFields),
-        ];
     }
 
 }

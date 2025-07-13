@@ -5,7 +5,7 @@ return [
     'api_version' => 'V1',
 
     // Enable or disable Data Transfer Objects (DTO)
-    'dto_enabled' => true,
+    'dto_enabled' => false,
     'ui_mode' => 'bootstrap',// adminlte - bootstrap
 
     // Enable or disable policies
@@ -15,7 +15,7 @@ return [
     'api_resource_enabled' => true,
 
     // The default model primary key type (int, uuid, ulid) --> default is uuid
-    'primary_key_fields_type' => 'ulid',
+    'primary_key_fields_type' => 'id',
 
     // Endpoint to create the main model
     'create-main-model-on-endpoint' => '',
@@ -77,12 +77,12 @@ return [
     'base_scope_class' => '',
     'base_trait_class' => '',
     'base_route_dir' => base_path('routes' . DIRECTORY_SEPARATOR),
-    'base_route_file_name' => 'api',
+    'base_route_file_name' => 'routes',
 
     // Directory structure configuration
     'dirs' => [
         // Main container directory name
-        'main-container-dir-name' => 'MyApp',
+        'main-container-dir-name' => 'MunjzNow',
 
         // Supplementary container directory name
         'sup-container-dir-name' => '',

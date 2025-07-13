@@ -4,6 +4,7 @@ namespace Ahmed3bead\LaraCrud\Console\Commands;
 
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 class CrudBlueprint extends Command
@@ -83,7 +84,26 @@ class CrudBlueprint extends Command
             $this->info('All Done');
             $this->warn('Ahmed Ebead');
         } catch (\Exception $e) {
-            throw new \Exception($e);
+            // Show detailed error information for debugging
+            $this->error('❌ Command failed with error:');
+            $this->error('Message: ' . $e->getMessage());
+            $this->error('File: ' . $e->getFile() . ':' . $e->getLine());
+
+            // Show stack trace for debugging
+            $this->error('Stack Trace:');
+            $this->line($e->getTraceAsString());
+
+            // Log the error for further debugging
+            Log::error('CRUD Command Error', [
+                'message' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString(),
+                'table' => $table ?? 'unknown',
+                'name' => $name ?? 'unknown',
+            ]);
+
+            return 1;
         }
 
         return 0;

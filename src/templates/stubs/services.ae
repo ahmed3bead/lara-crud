@@ -2,6 +2,9 @@
 namespace {{ DummyNamespace }};
 
 use App\{{ main-container-dir-name }}\{{ class_name_plural_name_space }}\Mappers\{{ ModelName }}DTOMapper;
+use App\{{ main-container-dir-name }}\{{ class_name_plural_name_space }}\Resources\{{ ModelName }}ShowResource;
+use App\{{ main-container-dir-name }}\{{ class_name_plural_name_space }}\Resources\{{ ModelName }}ListResource;
+use App\{{ main-container-dir-name }}\{{ class_name_plural_name_space }}\Resources\{{ ModelName }}IndexResource;
 use App\{{ main-container-dir-name }}\{{ class_name_plural_name_space }}\Models\{{ ModelName }};
 use App\{{ main-container-dir-name }}\{{ class_name_plural_name_space }}\Repositories\{{ ClassNamePlural }}Repository;
 
@@ -11,15 +14,122 @@ class {{ ClassNamePlural }}Service extends BaseService
 {
     /**
      * @var {{ ClassNamePlural }}Repository $repository
-     * @var {{ ModelName }}DTOMapper $mapper
      * AE
      */
     private {{ ClassNamePlural }}Repository $repository;
 
-    public function __construct({{ ClassNamePlural }}Repository $repository, {{ ModelName }}DTOMapper $mapper)
+    public function __construct({{ ClassNamePlural }}Repository $repository)
     {
-        parent::__construct($repository, $mapper);
+        parent::__construct($repository);
     }
+
+     public function getResourceByType(string $type = 'index', $data = null)
+     {
+         if (empty($data)) {
+             throw new \InvalidArgumentException('Data cannot be empty');
+         }
+
+         // Smart detection if type is auto
+         if ($type === 'auto') {
+             $type = $this->detectResourceType($data);
+         }
+
+         return match($type) {
+             'index' => $this->createIndexResource($data),
+             'list' => $this->createListResource($data),
+             'show' => $this->createShowResource($data),
+             'card' => $this->createCardResource($data),
+             'minimal' => $this->createMinimalResource($data),
+             default => throw new \InvalidArgumentException("Unsupported resource type: {$type}")
+         };
+     }
+
+     /**
+      * Smart detection of resource type based on data
+      */
+     private function detectResourceType($data): string
+     {
+         if (is_object($data)) {
+             // Single model instance
+             if (method_exists($data, 'getKey')) {
+                 return 'show';
+             }
+             // Paginator
+             if (method_exists($data, 'items')) {
+                 return 'list';
+             }
+         }
+
+         if (is_array($data) || (is_object($data) && method_exists($data, 'count'))) {
+             return 'index';
+         }
+
+         return 'show';
+     }
+
+     /**
+      * Create index resource (minimal data for listings)
+      */
+     private function createIndexResource($data)
+     {
+         if (is_object($data) && method_exists($data, 'items')) {
+             return {{ ModelName }}IndexResource::collection($data->items());
+         }
+
+         return {{ ModelName }}IndexResource::collection($data);
+     }
+
+     /**
+      * Create list resource (more detailed than index)
+      */
+     private function createListResource($data)
+     {
+         if (is_object($data) && method_exists($data, 'items')) {
+             return {{ ModelName }}ListResource::collection($data->items());
+         }
+
+         return {{ ModelName }}ListResource::collection($data);
+     }
+
+     /**
+      * Create show resource (full details for single item)
+      */
+     private function createShowResource($data)
+     {
+         // If it's a collection, get first item
+         if (is_array($data) && count($data) === 1) {
+             $data = $data[0];
+         } elseif (is_object($data) && method_exists($data, 'first') && $data->count() === 1) {
+             $data = $data->first();
+         }
+
+         return new {{ ModelName }}ShowResource($data);
+     }
+
+     /**
+      * Create card resource (for card/grid layouts)
+      */
+     private function createCardResource($data)
+     {
+         if (is_object($data) && method_exists($data, 'items')) {
+             return {{ ModelName }}CardResource::collection($data->items());
+         }
+
+         return {{ ModelName }}CardResource::collection($data);
+     }
+
+     /**
+      * Create minimal resource (just ID and name/title)
+      */
+     private function createMinimalResource($data)
+     {
+         return collect($data)->map(function ($item) {
+             return [
+                 'id' => $item->id ?? $item['id'],
+                 'name' => $item->name ?? $item->title ?? $item['name'] ?? $item['title'],
+             ];
+         });
+     }
 
     /**
      * Get the model class associated with this service
