@@ -719,7 +719,8 @@ EOD;
 
     private function generateTraits(bool|array|string|null $namespace_group, mixed $endpoint = null)
     {
-        $table = Str::snake($this->argument('name'));
+        $table = $this->option('table-name') ?: $this->argument('name');
+        $table = Str::snake($table);
         $name = Str::studly($this->argument('name'));
         $columns = $this->getTableColumns($table);
 
