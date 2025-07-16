@@ -89,7 +89,7 @@ trait ServiceHookTrait
         }
 
         // Fall back to global configuration
-        return config('lara-crud.hooks.default_service_hooks', [
+        return config('lara-crud.hooks.', [
             'global' => false,
             'crud' => false,
             'performance' => false,

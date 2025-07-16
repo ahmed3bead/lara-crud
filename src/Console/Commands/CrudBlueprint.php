@@ -11,7 +11,7 @@ class CrudBlueprint extends Command
 {
     use BaseCrudCommand;
 
-    protected $signature = 'crud:go
+    protected $signature = 'lara-crud:go
                             {--with-api-c=true : Generate api controller.}
                             {--namespace_group=  : The namespace of crud.}
                             {--with-web-c=true : Generate web controller.}
@@ -112,7 +112,7 @@ class CrudBlueprint extends Command
     private function createDirectories($name)
     {
         $namespace_group = $this->option('namespace_group') ?: null;
-        $this->call('crud:dirs', ['name' => $name, '--namespace_group' => $namespace_group]);
+        $this->call('lara-crud:dirs', ['name' => $name, '--namespace_group' => $namespace_group]);
         $this->info('Directories created successfully!');
     }
 
@@ -131,7 +131,7 @@ class CrudBlueprint extends Command
         $fillable = "['" . implode("', '", $fillableArray) . "']";
         $primaryKey = $this->option('pk');
 
-        $this->call('crud:model', [
+        $this->call('lara-crud:model', [
             'name' => $name,
             '--fillable' => $fillable,
             '--table-name' => $table,
@@ -158,7 +158,7 @@ class CrudBlueprint extends Command
 
     private function _createController($name, $table, $namespace_group, $type = 'api')
     {
-        $this->call('crud:api-controller', [
+        $this->call('lara-crud:api-controller', [
             'name' => $name,
             '--table-name' => $table,
             '--namespace_group' => $namespace_group,
@@ -229,7 +229,7 @@ class CrudBlueprint extends Command
     private function createUnitTest(mixed $name, $table, string $fields)
     {
         $namespace_group = $this->option('namespace_group') ?: null;
-        $this->call('crud:unit-test', [
+        $this->call('lara-crud:unit-test', [
             'name' => $name,
             '--table-name' => $table,
             '--namespace_group' => $namespace_group,

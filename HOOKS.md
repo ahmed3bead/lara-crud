@@ -44,279 +44,48 @@ This will publish the configuration to `config/lara-crud.php` and stubs to `reso
 
 ## 🎯 Service Hook System
 
-The **Service Hook System** is a powerful feature that allows you to execute code at specific points in your service methods using multiple execution strategies.
+The **Service Hook System** is a powerful enterprise-level feature that transforms your Laravel application into an event-driven architecture. This system allows you to execute custom code at specific lifecycle points in your service methods, providing unprecedented flexibility and maintainability.
 
-### Basic Hook Registration
+### Why Use the Hook System?
 
-```php
-<?php
+**🔧 Modular Architecture**: Break down complex business logic into smaller, manageable hook components that can be developed, tested, and maintained independently.
 
-namespace App\Services;
+**⚡ Multiple Execution Strategies**: Choose from synchronous, queued, delayed, or batched execution modes based on your performance requirements and business needs.
 
-use Ahmed3bead\LaraCrud\BaseClasses\BaseService;
-use App\Hooks\UserValidationHook;
-use App\Hooks\UserWelcomeEmailHook;
-use App\Hooks\CacheInvalidationHook;
+**🎯 Precise Control**: Hook into exact moments of your application lifecycle - before validation, after creation, during errors, or any custom trigger point you define.
 
-class UserService extends BaseService
-{
-    protected function registerServiceHooks(): void
-    {
-        // Call parent to get default hooks (auth, audit, etc.)
-        parent::registerServiceHooks();
+**📈 Scalable Performance**: Handle heavy operations asynchronously while keeping your main application flow responsive and fast.
 
-        // Synchronous validation before user creation
-        $this->addServiceSyncHook('before', 'create', UserValidationHook::class, [
-            'priority' => 15
-        ]);
+**🔍 Enterprise Monitoring**: Built-in audit trails, performance tracking, and detailed execution logs help you monitor and optimize your application behavior.
 
-        // Queued welcome email after user creation
-        $this->addServiceQueuedHook('after', 'create', UserWelcomeEmailHook::class, [
-            'priority' => 80
-        ]);
+**🧪 Testing Made Easy**: Isolated hook components are easier to unit test, debug, and modify without affecting core business logic.
 
-        // Delayed cache invalidation after updates
-        $this->addServiceDelayedHook('after', 'update', CacheInvalidationHook::class, 30, [
-            'priority' => 85
-        ]);
+### Real-World Hook Examples
 
-        // Batched analytics tracking
-        $this->addServiceBatchedHook('after', 'create', AnalyticsHook::class, [
-            'priority' => 90,
-            'batch_size' => 20
-        ]);
-    }
+- **User Registration**: Validate data → Create user → Send welcome email → Update analytics → Clear cache
+- **Order Processing**: Check inventory → Process payment → Update stock → Notify warehouse → Generate invoice
+- **Content Publishing**: Validate content → Save to database → Update search index → Notify subscribers → Generate sitemap
 
-    public function getResourceByType(string $type = 'index', $data = null)
-    {
-        return match($type) {
-            'show' => new UserResource($data),
-            'list' => UserResource::collection($data),
-            default => $data
-        };
-    }
-}
+### Hook Execution Flow
+
+```
+Service Method Called
+        ↓
+   Before Hooks (Sync)     ← Validation, Authorization
+        ↓
+   Core Business Logic     ← Your main service method
+        ↓
+   After Hooks (Async)     ← Notifications, Analytics, Cache Updates
+        ↓
+   Response Returned
 ```
 
-### Hook Execution Modes
-
-#### 1. Synchronous Hooks (Immediate execution)
-```php
-$this->addServiceSyncHook('before', 'create', ValidationHook::class);
-```
-
-#### 2. Queued Hooks (Background execution)
-```php
-$this->addServiceQueuedHook('after', 'create', EmailHook::class);
-```
-
-#### 3. Delayed Hooks (Execute after delay)
-```php
-$this->addServiceDelayedHook('after', 'update', CacheHook::class, 30); // 30 seconds
-```
-
-#### 4. Batched Hooks (Execute in batches)
-```php
-$this->addServiceBatchedHook('after', 'create', AnalyticsHook::class, [
-    'batch_size' => 50,
-    'batch_delay' => 60
-]);
-```
-
-### Creating Hook Classes
-
-```php
-<?php
-
-namespace App\Hooks;
-
-use Ahmed3bead\LaraCrud\BaseClasses\Hooks\BaseHookJob;
-use Ahmed3bead\LaraCrud\BaseClasses\Hooks\HookContext;
-use Illuminate\Support\Facades\Log;
-
-class UserValidationHook extends BaseHookJob
-{
-    protected int $priority = 15;
-
-    public function __construct()
-    {
-        // Only run for create and update methods
-        $this->onlyForMethods(['create', 'webCreate', 'update', 'webUpdate']);
-        
-        // Only run in before phase
-        $this->onlyForPhase('before');
-    }
-
-    public function handle(HookContext $context): void
-    {
-        $data = $context->data;
-        
-        // Access actual model data from wrapped responses
-        $model = $context->getModelFromResult();
-        
-        // Custom validation logic
-        if (empty($data['email'])) {
-            throw new \InvalidArgumentException('Email is required');
-        }
-
-        Log::info('User validation passed', [
-            'method' => $context->method,
-            'user_id' => $context->getUserId(),
-            'model_id' => $model?->id
-        ]);
-    }
-}
-```
-
-### Advanced Hook Features
-
-#### Conditional Hooks
-```php
-$this->addConditionalHook(
-    'before', 
-    'delete', 
-    AdminDeleteValidationHook::class,
-    function($context) {
-        return $context->user && $context->user->hasRole('admin');
-    }
-);
-```
-
-#### Priority-based Execution
-```php
-$this->addPriorityHook('before', 'create', HighPriorityHook::class, 5); // High priority
-$this->addPriorityHook('after', 'create', LowPriorityHook::class, 95);  // Low priority
-```
-
-#### Multiple Methods
-```php
-$this->addHookForMethods(
-    'after',
-    ['create', 'update', 'delete'],
-    AuditLogHook::class,
-    'queue'
-);
-```
-
-### Hook Context Data Access
-
-The `HookContext` provides rich access to execution data:
-
-```php
-public function handle(HookContext $context): void
-{
-    // Basic context info
-    $method = $context->method;           // 'create', 'update', etc.
-    $phase = $context->phase;             // 'before' or 'after'
-    $parameters = $context->parameters;   // Method parameters
-    
-    // Data access (works with wrapped responses)
-    $model = $context->getModelFromResult();      // Actual model instance
-    $data = $context->getDataFromResult();        // Raw data
-    $resource = $context->getResourceFromResult(); // Laravel resource
-    $response = $context->getWrappedResponse();   // BaseResponse wrapper
-    
-    // Response metadata
-    $statusCode = $context->getStatusCode();      // 200, 201, etc.
-    $isSuccessful = $context->isSuccessful();     // true/false
-    $message = $context->getMessage();            // Response message
-    
-    // Model operations
-    $modelId = $context->getModelId();            // Model primary key
-    $attributes = $context->getModelAttributes(); // Model as array
-    $changes = $context->getModelChanges();       // Changed attributes
-    $original = $context->getOriginalAttributes(); // Original values
-    
-    // User context
-    $userId = $context->getUserId();              // Current user ID
-    $user = $context->user;                       // User instance
-    
-    // Metadata
-    $metadata = $context->getMetadata('key');     // Custom metadata
-    $timestamp = $context->getMetadata('timestamp'); // Execution time
-}
-```
-
-### Built-in Hook Categories
-
-#### Global Hooks (Applied to all services)
-- **Authentication**: Ensures user authentication
-- **Authorization**: Checks user permissions
-- **Audit Logging**: Tracks all operations
-- **Performance Monitoring**: Monitors execution time
-
-#### CRUD Hooks (Applied to CRUD operations)
-- **Validation**: Data validation before operations
-- **Notifications**: Send notifications after operations
-- **Cache Management**: Cache invalidation and updates
-
-#### Performance Hooks
-- **Execution Timing**: Track method performance
-- **Memory Usage**: Monitor memory consumption
-- **Query Logging**: Log database queries
-
-### Configuration
-
-Configure the hook system in `config/lara-crud.php`:
-
-```php
-return [
-    'hooks' => [
-        'enabled' => env('LARA_CRUD_HOOKS_ENABLED', true),
-        'debug' => env('LARA_CRUD_HOOKS_DEBUG', false),
-        
-        'queue_connection' => env('LARA_CRUD_QUEUE_CONNECTION', 'default'),
-        'batch_queue' => env('LARA_CRUD_BATCH_QUEUE', 'batch'),
-        
-        'default_service_hooks' => [
-            'global' => true,      // Auth, audit, etc.
-            'crud' => true,        // Validation, notifications
-            'performance' => false, // Performance monitoring
-            'caching' => false     // Cache management
-        ],
-        
-        'global_hooks' => [
-            // Global hooks that apply to all services
-        ]
-    ]
-];
-```
-
-### Hook Management Commands
-
-```bash
-# List all registered hooks
-php artisan lara-crud:hooks list
-
-# Show hook statistics
-php artisan lara-crud:hooks stats
-
-# Debug hooks for a specific service
-php artisan lara-crud:hooks debug --service=App\\Services\\UserService
-
-# Clear all hooks
-php artisan lara-crud:hooks clear
-```
-
-### Testing Hooks
-
-```php
-class HookSystemTest extends TestCase
-{
-    public function test_hook_execution()
-    {
-        $userService = new UserService(new UserRepository());
-        
-        // Register test hook
-        $userService->addServiceSyncHook('before', 'create', TestValidationHook::class);
-        
-        // Execute method with hooks
-        $result = $userService->create(['name' => 'Test User', 'email' => 'test@example.com']);
-        
-        // Assert hook was executed
-        $this->assertNotNull($result);
-    }
-}
+> **📖 Ready to implement hooks in your application? Our [Comprehensive Hook Guide](./HOOKS.md) provides:**
+> - Complete step-by-step workflow examples
+> - Real-world hook implementations with code
+> - Advanced patterns and optimization techniques
+> - Hook generation commands and management tools
+> - Performance monitoring and debugging strategies
 ```
 
 ###  Understanding the Generated Files

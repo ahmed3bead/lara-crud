@@ -110,11 +110,41 @@ return [
             'Filters',
         ],
     ],
-    'default_service_hooks' => [
-        'global' => false,
-        'crud' => false,
-        'performance' => false,
-        'caching' => false
-    ],
-    'debug_mode' => true,
+    'hooks' => [
+        'enabled' => env('LARA_CRUD_HOOKS_ENABLED', true),
+        'debug' => env('LARA_CRUD_HOOKS_DEBUG', false),
+
+        'queue_connection' => env('LARA_CRUD_QUEUE_CONNECTION', 'default'),
+        'batch_queue' => env('LARA_CRUD_BATCH_QUEUE', 'batch'),
+
+        'default_service_hooks' => [
+            'global' => true,       // Authentication, authorization, audit logging
+            'crud' => true,         // Validation, notifications
+            'performance' => false, // Performance monitoring hooks
+            'caching' => false      // Cache management hooks
+        ],
+
+        'global_hooks' => [ // TODO
+            // Global hooks that apply to all services
+            /*
+           // Example global authentication hook
+           [
+               'method' => '*',
+               'phase' => 'before',
+               'hook' => \Ahmed3bead\LaraCrud\BaseClasses\Hooks\AuthenticationHook::class,
+               'strategy' => 'sync',
+               'options' => ['priority' => 5]
+           ],
+
+           // Example global audit log hook
+           [
+               'method' => '*',
+               'phase' => 'after',
+               'hook' => \Ahmed3bead\LaraCrud\BaseClasses\Hooks\AuditLogHook::class,
+               'strategy' => 'queue',
+               'options' => ['priority' => 95]
+           ],
+           */
+        ]
+    ]
 ];

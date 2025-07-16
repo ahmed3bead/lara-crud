@@ -2,7 +2,11 @@
 
 namespace Ahmed3bead\LaraCrud;
 
+use Ahmed3bead\LaraCrud\BaseClasses\Hooks\HookManager;
+use Ahmed3bead\LaraCrud\BaseClasses\Hooks\HookRegistry;
 use Ahmed3bead\LaraCrud\Console\Commands\GenerateUnitTestCommand;
+use Ahmed3bead\LaraCrud\Console\Commands\HooksManagementCommand;
+use Ahmed3bead\LaraCrud\Console\Commands\MakeHookCommand;
 use Illuminate\Support\ServiceProvider;
 use Ahmed3bead\LaraCrud\Console\Commands\CrudBlueprint;
 use Ahmed3bead\LaraCrud\Console\Commands\CrudBlueprintApiControllerCommand;
@@ -30,6 +34,16 @@ class LaraCrudServiceProvider extends ServiceProvider
      */
     public function boot()
     {
+
+        $this->app->singleton(HookRegistry::class, function ($app) {
+            return new HookRegistry();
+        });
+
+        $this->app->singleton(HookManager::class, function ($app) {
+            $registry = $app->make(HookRegistry::class);
+            return new HookManager($registry);
+        });
+
         // Publish configuration and templates
         $this->publishes([
             __DIR__ . '/../config/lara_crud.php' => config_path('lara_crud.php'),
@@ -59,6 +73,8 @@ class LaraCrudServiceProvider extends ServiceProvider
 
         $this->loadViewsFrom(__DIR__.'/../resources/views', 'lara-crud');
 
+        $this->loadGlobalHooks();
+
         // Register console commands if running in console
         if ($this->app->runningInConsole()) {
             $this->commands([
@@ -68,7 +84,41 @@ class LaraCrudServiceProvider extends ServiceProvider
                 CrudBlueprintExportTableToJson::class,
                 CrudBlueprintModelCommand::class,
                 GenerateUnitTestCommand::class,
+                HooksManagementCommand::class,
+                MakeHookCommand::class,
             ]);
+        }
+    }
+    /**
+     * Load global hooks from configuration
+     */
+    private function loadGlobalHooks(): void
+    {
+        if (!$this->app->bound(HookManager::class)) {
+            return;
+        }
+
+        $hookManager = $this->app->make(HookManager::class);
+        $globalHooks = config('lara-crud.hooks.global_hooks', []);
+
+        foreach ($globalHooks as $hookDef) {
+            try {
+                $hookManager->addGlobalHook(
+                    $hookDef['method'],
+                    $hookDef['phase'],
+                    $hookDef['hook'],
+                    $hookDef['strategy'] ?? 'sync',
+                    $hookDef['options'] ?? []
+                );
+            } catch (\Exception $e) {
+                // Log error but don't break the application
+                if (function_exists('logger')) {
+                    logger()->error('Failed to register global hook', [
+                        'hook' => $hookDef,
+                        'error' => $e->getMessage()
+                    ]);
+                }
+            }
         }
     }
 }

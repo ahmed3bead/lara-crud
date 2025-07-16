@@ -17,7 +17,7 @@ class CrudBlueprintApiControllerCommand extends GeneratorCommand
      *
      * @var string
      */
-    protected $signature = 'crud:api-controller
+    protected $signature = 'lara-crud:api-controller
                             {name : The name of the model.}
                             {--namespace_group=  : the namespace of crud.}
                             {--table-name=  : Table Name.}

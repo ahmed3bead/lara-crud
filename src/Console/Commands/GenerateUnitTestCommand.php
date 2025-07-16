@@ -9,7 +9,7 @@ use Illuminate\Support\Str;
 class GenerateUnitTestCommand extends GeneratorCommand
 {
     use BaseCrudCommand;
-    protected $signature = 'crud:unit-test
+    protected $signature = 'lara-crud:unit-test
                             {name : The name of the model.}
                             {--namespace_group=  : the namespace of crud.}
                             {--table-name=  : Table Name.}';

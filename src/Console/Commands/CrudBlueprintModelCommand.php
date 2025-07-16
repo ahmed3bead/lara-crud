@@ -29,7 +29,7 @@ class CrudBlueprintModelCommand extends GeneratorCommand
      *
      * @var string
      */
-    protected $signature = 'crud:model
+    protected $signature = 'lara-crud:model
                             {name : The name of the model.}
                             {--table-name= : DB table name if different from module name.}
                             {--namespace_group=  : the namespace of crud.}

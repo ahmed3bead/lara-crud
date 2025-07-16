@@ -20,7 +20,7 @@ class HookManager
     public function __construct(HookRegistry $registry = null)
     {
         $this->registry = $registry ?? new HookRegistry();
-        $this->debugMode = config('lara-crud.debug_mode', false);
+        $this->debugMode = config('lara-crud.hooks.debug', false);
     }
 
     /**

@@ -13,7 +13,7 @@ use Illuminate\Support\Str;
 class CrudBlueprintExportTableToJson extends Command
 {
     use BaseCrudCommand;
-    protected $signature = 'crud:export-table
+    protected $signature = 'lara-crud:export-table
                             {table : The name of the table to export.}
                             {--path= : The path to save the JSON file.}';
 

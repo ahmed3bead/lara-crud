@@ -233,11 +233,11 @@ trait BaseCrudCommand
         if (file_exists($fieldsFile)) {
             if ($this->confirm('{' . $table . '} module fields file exists, this will override, do you wish to continue?')) {
                 $this->info('Convert DB Table To JSON');
-                $this->call('crud:export-table', ['table' => $table]);
+                $this->call('lara-crud:export-table', ['table' => $table]);
             }
         } else {
             $this->info('Convert DB Table To JSON');
-            $this->call('crud:export-table', ['table' => $table]);
+            $this->call('lara-crud:export-table', ['table' => $table]);
         }
         return true;
     }

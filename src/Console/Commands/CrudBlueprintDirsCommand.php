@@ -14,7 +14,7 @@ class CrudBlueprintDirsCommand extends Command
      *
      * @var string
      */
-    protected $signature = 'crud:dirs
+    protected $signature = 'lara-crud:dirs
                             {name : The name of the Crud.}
                             {--namespace_group=  : the namespace of crud.}';
 
