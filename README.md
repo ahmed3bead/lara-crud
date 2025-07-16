@@ -27,7 +27,7 @@ composer require ahmedebead/lara-crud
 To generate CRUD operations, use the following Artisan command. The command will prompt you to enter the database table name associated with the model:
 
 ```bash
-php artisan crud:go
+php artisan lara-crud:go
 ```
 
 Upon running this command, you will be prompted to enter the database table name associated with the model.
@@ -390,13 +390,13 @@ To generate views for your model, use the `--with-views` option with your prefer
 
 ```bash
 # Generate with AdminLTE
-php artisan crud:go --with-views=adminlte
+php artisan lara-crud:go --with-views=adminlte
 
 # Generate with Bootstrap
-php artisan crud:go --with-views=bootstrap
+php artisan lara-crud:go --with-views=bootstrap
 
 # Or let the CLI prompt you to choose
-php artisan crud:go --with-views
+php artisan lara-crud:go --with-views
 ```
 
 #### Prerequisites for AdminLTE
