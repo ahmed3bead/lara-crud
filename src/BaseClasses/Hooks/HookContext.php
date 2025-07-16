@@ -204,6 +204,7 @@ class HookContext
             'method' => $this->method,
             'phase' => $this->phase,
             'data' => $this->data,
+            'request_data' => request()->all() ?? [],
             'parameters' => $this->parameters,
             'result_type' => $this->result ? get_class($this->result) : null,
             'has_wrapped_response' => $this->hasWrappedResponse(),
@@ -239,6 +240,15 @@ class HookContext
     public function getMetadata(string $key, mixed $default = null): mixed
     {
         return $this->metadata[$key] ?? $default;
+    }
+
+
+    /**
+     * Get request_data value
+     */
+    public function getRequestData(): array
+    {
+        return request()->all() ?? [];
     }
 
     /**
