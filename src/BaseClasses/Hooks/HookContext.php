@@ -200,13 +200,11 @@ class HookContext
      */
     public function toArray(): array
     {
-        $config = config('lara-crud.hook_context_fields', []);
-        $allFields = [
+        return [
             'method' => $this->method,
             'phase' => $this->phase,
             'data' => $this->data,
             'parameters' => $this->parameters,
-            'request_data' => request()->all(),
             'result_type' => $this->result ? get_class($this->result) : null,
             'has_wrapped_response' => $this->hasWrappedResponse(),
             'status_code' => $this->getStatusCode(),
@@ -217,11 +215,6 @@ class HookContext
             'user' => $this->user ? get_class($this->user) : null,
             'metadata' => $this->metadata
         ];
-
-        // Filter fields based on config
-        return array_filter($allFields, function ($key) use ($config) {
-            return isset($config[$key]) && $config[$key] === true;
-        }, ARRAY_FILTER_USE_KEY);
     }
 
     /**

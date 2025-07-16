@@ -116,21 +116,5 @@ return [
         'performance' => false,
         'caching' => false
     ],
-    'hook_context_fields' => [
-        'method' => true,
-        'phase' => true,
-        'data' => true,
-        'parameters' => true,
-        'request_data' => true,
-        'result_type' => true,
-        'has_wrapped_response' => true,
-        'status_code' => true,
-        'message' => true,
-        'service' => true,
-        'model' => true,
-        'extracted_model' => true,
-        'user' => true,
-        'metadata' => true
-    ],
     'debug_mode' => true,
 ];
