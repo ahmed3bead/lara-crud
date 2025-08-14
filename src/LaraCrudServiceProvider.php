@@ -66,10 +66,10 @@ class LaraCrudServiceProvider extends ServiceProvider
             __DIR__ . '/../resources/stubs/views' => resource_path('stubs/views'),
         ], 'lara-crud-views-stubs');
 
-        // Publish web controller stub
-        $this->publishes([
-            __DIR__ . '/../resources/stubs/web-controller.stub' => resource_path('stubs/web-controller.stub'),
-        ], 'lara-crud-controller-stub');
+//        // Publish web controller stub
+//        $this->publishes([
+//            __DIR__ . '/../resources/stubs/web-controller.stub' => resource_path('stubs/web-controller.stub'),
+//        ], 'lara-crud-controller-stub');
 
         $this->loadViewsFrom(__DIR__.'/../resources/views', 'lara-crud');
 
