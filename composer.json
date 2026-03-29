@@ -18,8 +18,9 @@
         "source": "https://github.com/ahmedebead/lara-crud"
     },
     "require": {
-        "php": "^8.1|^8.2|^8.3",
-        "spatie/laravel-query-builder": "^5.0 || ^6.0"
+        "php": "^8.2|^8.3",
+        "laravel/framework": "^10.0|^11.0|^12.0|^13.0",
+        "spatie/laravel-query-builder": "^5.0|^6.0|^7.0"
     },
     "suggest": {
         "jeroennoten/laravel-adminlte": "^3.8 - Required for AdminLTE view generation",
