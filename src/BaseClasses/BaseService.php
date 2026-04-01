@@ -11,9 +11,17 @@ abstract class BaseService
 
     private mixed $repository;
 
-    public function __construct($repository)
+    private mixed $mapper = null;
+
+    public function __construct($repository, $mapper = null)
     {
         $this->setRepository($repository);
+        $this->mapper = $mapper;
+    }
+
+    public function getMapper(): mixed
+    {
+        return $this->mapper;
     }
 
     /**
