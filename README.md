@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="https://raw.githubusercontent.com/ahmed3bead/lara-crud/main/lara-crud-banner.png" width="100%" alt="Lara-CRUD Banner">
+</p>
+
 # Lara-CRUD
 
 A Laravel package that generates complete CRUD scaffolding and provides a layered service architecture out of the box.
