@@ -71,7 +71,11 @@ class LaraCrudServiceProvider extends ServiceProvider
 //            __DIR__ . '/../resources/stubs/web-controller.stub' => resource_path('stubs/web-controller.stub'),
 //        ], 'lara-crud-controller-stub');
 
-        $this->loadViewsFrom(__DIR__.'/../resources/views', 'lara-crud');
+        $viewsPath = __DIR__.'/../resources/views';
+        if (is_dir($viewsPath)) {
+            $this->loadViewsFrom($viewsPath, 'lara-crud');
+        }
+
 
         $this->loadGlobalHooks();
 
