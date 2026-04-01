@@ -24,6 +24,11 @@ abstract class BaseService
         return $this->mapper;
     }
 
+    public function setMapper(mixed $mapper): void
+    {
+        $this->mapper = $mapper;
+    }
+
     /**
      * Web paginate with hook support
      */
