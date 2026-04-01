@@ -76,10 +76,16 @@ abstract class BaseService
         return $this->executeWithHooks(
             'paginate',
             function() use ($request) {
-                $data = $this->getRepository()->paginate($request->query(), $request->query('perPage'));
-                $resourceData = $this->getResourceByType('list', $data);
-
-                return $this->response()->setData($resourceData)->setStatusCode(HttpStatus::HTTP_OK);
+                $paginator = $this->getRepository()->paginate($request->query(), $request->query('perPage'));
+                $resourceData = $this->getResourceByType('list', $paginator->items());
+                return $this->response()->setData($resourceData)->setMeta([
+                    'currentPage' => $paginator->currentPage(),
+                    'lastPage' => $paginator->lastPage(),
+                    'path' => $paginator->path(),
+                    'totalCount' => count($paginator->items()),
+                    'perPage' => $paginator->perPage(),
+                    'total' => $paginator->total(),
+                ])->setStatusCode(HttpStatus::HTTP_OK);
             },
             $request->query(),
             ['request' => $request, 'per_page' => $request->query('perPage')]
