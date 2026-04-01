@@ -123,7 +123,7 @@ use Illuminate\Support\Carbon;
  * @property mixed $created_at
  * @property mixed $updated_at
  */
-abstract class BaseUlidModel extends Model
+class BaseUlidModel extends Model
 {
     use CanSaveQuietly;
     use HasUlids;
