@@ -122,36 +122,45 @@ trait ServiceHookTrait
     }
 
     /**
-     * Register hooks that should run for all CRUD operations
+     * Extension point: register hooks that run for all CRUD operations.
+     * Called automatically when lara_crud.hooks.default_service_hooks.global is true.
+     *
+     * Override in your concrete service to add cross-cutting hooks:
+     *   $this->addServiceSyncHook('before', 'create', AuthorizationHook::class);
+     *   $this->addServiceQueuedHook('after', '*', AuditLogHook::class);
      */
-    protected function registerGlobalServiceHooks(): void
-    {
-
-    }
+    protected function registerGlobalServiceHooks(): void {}
 
     /**
-     * Register hooks for specific CRUD operations
+     * Extension point: register hooks for specific CRUD operations.
+     * Called automatically when lara_crud.hooks.default_service_hooks.crud is true.
+     *
+     * Override in your concrete service to add operation-specific hooks:
+     *   $this->addServiceSyncHook('before', 'create', ValidateUniqueEmailHook::class);
+     *   $this->addServiceQueuedHook('after', 'create', SendWelcomeEmailHook::class);
      */
-    protected function registerCrudHooks(): void
-    {
-
-    }
+    protected function registerCrudHooks(): void {}
 
     /**
-     * Register performance monitoring hooks
+     * Extension point: register performance monitoring hooks.
+     * Called automatically when lara_crud.hooks.default_service_hooks.performance is true.
+     *
+     * Override in your concrete service to add performance tracking hooks:
+     *   $this->addServiceSyncHook('before', 'paginate', StartTimerHook::class);
+     *   $this->addServiceSyncHook('after', 'paginate', RecordQueryTimeHook::class);
      */
-    protected function registerPerformanceHooks(): void
-    {
-
-    }
+    protected function registerPerformanceHooks(): void {}
 
     /**
-     * Register caching hooks
+     * Extension point: register cache management hooks.
+     * Called automatically when lara_crud.hooks.default_service_hooks.caching is true.
+     *
+     * Override in your concrete service to add cache invalidation hooks:
+     *   $this->addServiceSyncHook('after', 'create', InvalidateCacheHook::class);
+     *   $this->addServiceSyncHook('after', 'update', InvalidateCacheHook::class);
+     *   $this->addServiceSyncHook('after', 'delete', InvalidateCacheHook::class);
      */
-    protected function registerCachingHooks(): void
-    {
-
-    }
+    protected function registerCachingHooks(): void {}
 
     /**
      * Add a queued hook

@@ -2,6 +2,8 @@
 
 namespace Ahmed3bead\LaraCrud\BaseClasses;
 
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Collection;
 use Spatie\QueryBuilder\QueryBuilder;
 
 class BaseRepository
@@ -50,13 +52,14 @@ class BaseRepository
 
     public function paginate($requestQuery, $perPage = 20)
     {
+        $sortAsc = (bool) ($requestQuery['sortAsc'] ?? false);
         return QueryBuilder::for($this->getModel()->select($this->getSelector()->listing()))
             ->allowedFilters($this->getModel()->getAllowedFilters())
             ->allowedFields($this->getModel()->getAllowedFields())
             ->allowedIncludes(
                 $this->getModel()->getAllowedIncludes()
             )
-            ->defaultSort($this->getModel()->getDefaultSort())
+            ->defaultSort($this->getModel()->getDefaultSort($sortAsc))
             ->paginate($perPage)
             ->appends($requestQuery);
     }
@@ -105,10 +108,9 @@ class BaseRepository
 
     public function minimalListWithFilter(
         array $with = [],
-        array $where = []
-    )
-    {
-
+        array $where = [],
+        int   $limit = 250
+    ): Collection {
         $query = $this->getModel()->query();
         if (!empty($with) && empty($where)) {
             $query = $query->with($with);
@@ -120,17 +122,47 @@ class BaseRepository
             $query = $query->with($with)->where($where);
         }
 
-        return QueryBuilder::for(
-            $query
-        )
+        return QueryBuilder::for($query)
             ->select($this->getSelector()->minimum())
-            ->limit(request('limit', 250))
+            ->limit($limit)
             ->allowedFilters($this->getModel()->getAllowedFilters())
             ->allowedFields($this->getModel()->getAllowedFields())
-            ->allowedIncludes(
-                $this->getModel()->getAllowedIncludes()
-            )
+            ->allowedIncludes($this->getModel()->getAllowedIncludes())
             ->defaultSort($this->getModel()->getDefaultSort())
             ->get();
+    }
+
+    public function count(array $filters = []): int
+    {
+        $query = $this->getModel()->query();
+        if (!empty($filters)) {
+            $query->where($filters);
+        }
+        return $query->count();
+    }
+
+    public function exists(array $filters): bool
+    {
+        return $this->getModel()->where($filters)->exists();
+    }
+
+    public function findMany(array $ids): Collection
+    {
+        return $this->getModel()->findMany($ids);
+    }
+
+    public function createMany(array $records): bool
+    {
+        return $this->getModel()->insert($records);
+    }
+
+    public function findWhere(array $conditions): Collection
+    {
+        return $this->getModel()->where($conditions)->get();
+    }
+
+    public function firstWhere(array $conditions): ?Model
+    {
+        return $this->getModel()->where($conditions)->first();
     }
 }

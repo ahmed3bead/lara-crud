@@ -8,22 +8,22 @@ use Illuminate\Support\Collection;
 class BaseDTOMapper
 {
     private mixed $model;
-    private static mixed $DTO;
+    private mixed $dto;
 
-    public function __construct($dto,$model)
+    public function __construct($dto, $model)
     {
         $this->setModel($model);
         $this->setDTO($dto);
     }
 
-    public static function getDTO(): mixed
+    public function getDTO(): mixed
     {
-        return self::$DTO;
+        return $this->dto;
     }
 
-    public static function setDTO(mixed $DTO): void
+    public function setDTO(mixed $dto): void
     {
-        self::$DTO = $DTO;
+        $this->dto = $dto;
     }
 
 
@@ -55,16 +55,16 @@ class BaseDTOMapper
 
     public static function mapFromRequest(BaseRequest $request)
     {
-        $mapper = get_called_class();
-        $mapper = new $mapper;
-        return $mapper::prepareData(self::getDTO(), $request);
+        $mapperClass = get_called_class();
+        $mapper = new $mapperClass;
+        return $mapperClass::prepareData($mapper->getDTO(), $request);
     }
 
     public static function mapFromDB($Ae)
     {
-        $mapper = get_called_class();
-        $mapper = new $mapper;
-        return $mapper::prepareData(self::getDTO(), $Ae);
+        $mapperClass = get_called_class();
+        $mapper = new $mapperClass;
+        return $mapperClass::prepareData($mapper->getDTO(), $Ae);
     }
 
     public static function fromArray(array $data): array

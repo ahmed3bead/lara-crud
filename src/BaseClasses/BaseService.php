@@ -13,6 +13,12 @@ abstract class BaseService
 
     private mixed $mapper = null;
 
+    /** Resource class used for single-item responses (show, create, update). */
+    protected string $resourceClass = '';
+
+    /** Resource class used for collection responses (paginate, all). Falls back to $resourceClass. */
+    protected string $listResourceClass = '';
+
     public function __construct($repository, $mapper = null)
     {
         $this->setRepository($repository);
@@ -38,7 +44,7 @@ abstract class BaseService
             'webPaginate',
             function() use ($request) {
                 if ($request->has('listing')) {
-                    return $this->getRepository()->minimalListWithFilter();
+                    return $this->getRepository()->minimalListWithFilter(limit: (int) $request->query('limit', 250));
                 } else {
                     $data = $this->getRepository()->paginate(
                         $request->query(),
@@ -155,16 +161,21 @@ abstract class BaseService
         }
 
         // 2. Resource mode (Laravel API Resource)
-        if (property_exists($this, 'resourceClass') && $this->resourceClass) {
+        $class = match($type) {
+            'list', 'index' => $this->listResourceClass ?: $this->resourceClass,
+            default         => $this->resourceClass,
+        };
+
+        if ($class) {
             if (is_null($data)) {
                 return null;
             }
 
             if ($data instanceof \Illuminate\Database\Eloquent\Model) {
-                return new $this->resourceClass($data);
+                return new $class($data);
             }
 
-            return $this->resourceClass::collection($data);
+            return $class::collection($data);
         }
 
         // 3. Raw fallback

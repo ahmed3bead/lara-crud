@@ -226,7 +226,7 @@ class BaseResponse implements JsonSerializable
             'message' => $this->getMessage(),
             'source' => $this->getSource(),
         ];
-        if (env('APP_DEBUG', false)) {
+        if (config('lara_crud.expose_debug_in_response', false)) {
             $return_data += ['debug' => $this->getDebug()];
         }
 

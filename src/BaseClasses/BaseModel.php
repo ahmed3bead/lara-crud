@@ -164,22 +164,14 @@ class BaseModel extends Model
         return [];
     }
 
-    public static function getDefaultSort()
+    public static function getDefaultSort(bool $sortAsc = false): string
     {
-        if (request('sortAsc', false)) {
-            return 'created_at';
-        } else {
-            return '-created_at';
-        }
+        return $sortAsc ? 'created_at' : '-created_at';
     }
 
-    public static function getAllowedSorts()
+    public static function getAllowedSorts(bool $sortAsc = false): string
     {
-        if (request('sortAsc', false)) {
-            return 'created_at';
-        } else {
-            return '-created_at';
-        }
+        return $sortAsc ? 'created_at' : '-created_at';
     }
 
     public static function getAllowedIncludes(): array

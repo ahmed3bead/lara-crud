@@ -11,28 +11,18 @@ class BaseController extends Controller
     protected array $requestMap = [];
     private mixed $service;
 
-    /**
-     * @throws \Exception
-     */
     public function __construct($service)
     {
-        try {
-            $this->setService($service);
-        } catch (\Exception $e) {
-            report($e);
-            throw $e;
-        }
+        $this->setService($service);
     }
 
     public function index(FormRequest $request, $perPage = 20)
     {
-
-        $resolvedRequest = resolve($this->requestMap['index']);
+        $resolvedRequest = $this->resolveRequest('index');
         if ($request->has('getAllRecords')) {
             return $this->getService()->tryAndResponse(fn() => $this->getService()->all());
         }
         return $this->getService()->tryAndResponse(fn() => $this->getService()->paginate($resolvedRequest));
-
     }
 
     /**
@@ -53,46 +43,36 @@ class BaseController extends Controller
 
     public function create(FormRequest $request)
     {
-        try {
-            $resolvedRequest = resolve($this->requestMap['create']);
-            return $this->getService()->tryAndResponse(fn() => $this->getService()->create($resolvedRequest->all()));
-        } catch (\Exception $e) {
-            report($e);
-            throw $e;
-        }
+        $resolvedRequest = $this->resolveRequest('create');
+        return $this->getService()->tryAndResponse(fn() => $this->getService()->create($resolvedRequest->all()));
     }
 
     public function update(FormRequest $request, $id)
     {
-        try {
-            $resolvedRequest = resolve($this->requestMap['update']);
-            return $this->getService()->tryAndResponse(fn() => $this->getService()->update($resolvedRequest->all(), $id));
-        } catch (\Exception $e) {
-            report($e);
-            throw $e;
-        }
+        $resolvedRequest = $this->resolveRequest('update');
+        return $this->getService()->tryAndResponse(fn() => $this->getService()->update($resolvedRequest->all(), $id));
     }
 
     public function delete(FormRequest $request, $id)
     {
-        try {
-            $resolvedRequest = resolve($this->requestMap['delete']);
-            return $this->getService()->tryAndResponse(fn() => $this->getService()->delete($id));
-        } catch (\Exception $e) {
-            report($e);
-            throw $e;
-        }
+        $this->resolveRequest('delete');
+        return $this->getService()->tryAndResponse(fn() => $this->getService()->delete($id));
     }
 
     public function show(FormRequest $request, $id)
     {
-        try {
-            $show = (isset($this->requestMap['show'])) ? $this->requestMap['show'] : $this->requestMap['view'];
-            $resolvedRequest = resolve($show);
-            return $this->getService()->tryAndResponse(fn() => $this->getService()->show($id));
-        } catch (\Exception $e) {
-            report($e);
-            throw $e;
+        $this->resolveRequest(isset($this->requestMap['show']) ? 'show' : 'view');
+        return $this->getService()->tryAndResponse(fn() => $this->getService()->show($id));
+    }
+
+    /**
+     * Resolve a request class from the requestMap, throwing a clear error when missing.
+     */
+    private function resolveRequest(string $key): mixed
+    {
+        if (!isset($this->requestMap[$key])) {
+            throw new \RuntimeException("No request class mapped for action '{$key}' in " . static::class);
         }
+        return resolve($this->requestMap[$key]);
     }
 }

@@ -14,6 +14,9 @@ return [
     // Enable or disable API resources
     'api_resource_enabled' => true,
 
+    // Expose query log debug info in API responses (never enable in production)
+    'expose_debug_in_response' => env('LARA_CRUD_EXPOSE_DEBUG', false),
+
     // The default model primary key type (int, uuid, ulid) --> default is uuid
     'primary_key_fields_type' => 'id',
 

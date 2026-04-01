@@ -67,7 +67,7 @@ class HookContext
 
         // If result is a BaseResponse, extract the data
         if ($this->result instanceof BaseResponse) {
-            return $this->extractDataFromResponse($this->result);
+            return $this->result->getData();
         }
 
         return $this->result;
@@ -84,7 +84,7 @@ class HookContext
 
         // If result is a BaseResponse, extract the resource
         if ($this->result instanceof BaseResponse) {
-            $data = $this->extractDataFromResponse($this->result);
+            $data = $this->result->getData();
 
             // If the data is a Laravel Resource, return it
             if (is_object($data) && method_exists($data, 'resource')) {
@@ -118,11 +118,7 @@ class HookContext
      */
     private function extractModelFromResponse(BaseResponse $response): ?Model
     {
-        // Use reflection to access private data property
-        $reflection = new \ReflectionClass($response);
-        $dataProperty = $reflection->getProperty('data');
-        $dataProperty->setAccessible(true);
-        $data = $dataProperty->getValue($response);
+        $data = $response->getData();
 
         // If data is a Laravel Resource, get the underlying model
         if (is_object($data) && property_exists($data, 'resource')) {
@@ -158,11 +154,7 @@ class HookContext
      */
     private function extractDataFromResponse(BaseResponse $response): mixed
     {
-        // Use reflection to access private data property
-        $reflection = new \ReflectionClass($response);
-        $dataProperty = $reflection->getProperty('data');
-        $dataProperty->setAccessible(true);
-        return $dataProperty->getValue($response);
+        return $response->getData();
     }
 
     /**
@@ -171,10 +163,7 @@ class HookContext
     public function getStatusCode(): ?int
     {
         if ($this->result instanceof BaseResponse) {
-            $reflection = new \ReflectionClass($this->result);
-            $statusProperty = $reflection->getProperty('statusCode');
-            $statusProperty->setAccessible(true);
-            return $statusProperty->getValue($this->result);
+            return $this->result->getStatusCode();
         }
 
         return null;
@@ -186,10 +175,7 @@ class HookContext
     public function getMessage(): ?string
     {
         if ($this->result instanceof BaseResponse) {
-            $reflection = new \ReflectionClass($this->result);
-            $messageProperty = $reflection->getProperty('message');
-            $messageProperty->setAccessible(true);
-            return $messageProperty->getValue($this->result);
+            return $this->result->getMessage();
         }
 
         return null;

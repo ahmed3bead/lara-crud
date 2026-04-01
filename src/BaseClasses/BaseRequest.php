@@ -8,8 +8,9 @@ use Illuminate\Foundation\Http\FormRequest;
 class BaseRequest extends FormRequest
 {
     use RequestValidator;
-    public function authorize()
+    public function authorize(): bool
     {
+        return true; // default open; override in concrete requests for policy checks
     }
 
     public function rules(): array

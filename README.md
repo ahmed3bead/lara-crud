@@ -1,289 +1,509 @@
 # Lara-CRUD
 
-The **Lara-CRUD** package simplifies the process of creating, reading, updating, and deleting data in a Laravel application. This package provides a set of helpful traits and methods to handle common CRUD operations efficiently, ensuring a streamlined development workflow with **enterprise-level service hooks** for event-driven architecture.
+A Laravel package that generates complete CRUD scaffolding and provides a layered service architecture out of the box.
 
-## 🚀 Key Features
-
-- **Complete CRUD Generation**: Generates controllers, models, services, repositories, and more
-- **Service Hook System**: Enterprise-level hook system for event-driven architecture
-- **Multiple UI Frameworks**: Support for Bootstrap and AdminLTE
-- **Standardized API Responses**: Consistent response formatting
-- **Repository Pattern**: Clean data access layer
-- **Service Layer**: Business logic encapsulation
-- **Multiple Execution Modes**: Sync, queue, delay, and batch hook execution
-
-## Installation
-
-To install the package via Composer, run the following command:
+**Requires:** PHP 8.2+, Laravel 10–13, `spatie/laravel-query-builder` ^5|^6|^7
 
 ```bash
 composer require ahmedebead/lara-crud
 ```
 
-## How to Use
+---
 
-### Step 1: Generate CRUD Operations
+## Table of Contents
 
-To generate CRUD operations, use the following Artisan command. The command will prompt you to enter the database table name associated with the model:
+1. [How it works](#how-it-works)
+2. [Generate a module](#generate-a-module)
+3. [What gets generated](#what-gets-generated)
+4. [Layer by layer](#layer-by-layer)
+   - [Model](#model)
+   - [Repository](#repository)
+   - [Service — Resource mode (default)](#service--resource-mode-default)
+   - [Service — Mapper mode](#service--mapper-mode)
+   - [Controller](#controller)
+   - [Request](#request)
+   - [Response envelope](#response-envelope)
+5. [Hook system](#hook-system)
+6. [Configuration reference](#configuration-reference)
+7. [Artisan commands](#artisan-commands)
+8. [Contributing / License](#contributing--license)
+
+---
+
+## How it works
+
+Every generated module follows the same layered flow:
+
+```
+HTTP Request → Controller → Service → Repository → Model
+```
+
+| Layer | Responsibility |
+|---|---|
+| Controller | Resolves request class, delegates to service, returns JSON |
+| Service | Business logic, wraps results in `BaseResponse` |
+| Repository | Data access via Spatie QueryBuilder |
+| Model | Eloquent model with allowed filters/includes/sorts |
+
+---
+
+## Generate a module
 
 ```bash
 php artisan lara-crud:go
 ```
 
-Upon running this command, you will be prompted to enter the database table name associated with the model.
-
-## Step 2: Publishing Stubs and Configs
-
-To customize the generated files, you can publish the stubs and configuration files provided by the package using the following Artisan command:
+The wizard asks for the table name and generates everything. Publish the config and stubs if you want to customise the defaults:
 
 ```bash
 php artisan vendor:publish --provider="Ahmed3bead\LaraCrud\LaraCrudServiceProvider"
 ```
 
-This will publish the configuration to `config/lara-crud.php` and stubs to `resources/stubs/vendor/lara-crud`.
+Config lands at `config/lara_crud.php`. Stubs land at `resources/stubs/vendor/lara-crud/`.
 
-## 🎯 Service Hook System
+---
 
-The **Service Hook System** is a powerful enterprise-level feature that transforms your Laravel application into an event-driven architecture. This system allows you to execute custom code at specific lifecycle points in your service methods, providing unprecedented flexibility and maintainability.
-
-### Why Use the Hook System?
-
-**🔧 Modular Architecture**: Break down complex business logic into smaller, manageable hook components that can be developed, tested, and maintained independently.
-
-**⚡ Multiple Execution Strategies**: Choose from synchronous, queued, delayed, or batched execution modes based on your performance requirements and business needs.
-
-**🎯 Precise Control**: Hook into exact moments of your application lifecycle - before validation, after creation, during errors, or any custom trigger point you define.
-
-**📈 Scalable Performance**: Handle heavy operations asynchronously while keeping your main application flow responsive and fast.
-
-**🔍 Enterprise Monitoring**: Built-in audit trails, performance tracking, and detailed execution logs help you monitor and optimize your application behavior.
-
-**🧪 Testing Made Easy**: Isolated hook components are easier to unit test, debug, and modify without affecting core business logic.
-
-### Real-World Hook Examples
-
-- **User Registration**: Validate data → Create user → Send welcome email → Update analytics → Clear cache
-- **Order Processing**: Check inventory → Process payment → Update stock → Notify warehouse → Generate invoice
-- **Content Publishing**: Validate content → Save to database → Update search index → Notify subscribers → Generate sitemap
-
-### Hook Execution Flow
+## What gets generated
 
 ```
-Service Method Called
-        ↓
-   Before Hooks (Sync)     ← Validation, Authorization
-        ↓
-   Core Business Logic     ← Your main service method
-        ↓
-   After Hooks (Async)     ← Notifications, Analytics, Cache Updates
-        ↓
-   Response Returned
+app/{MainContainer}/{ModuleName}/
+├── Controllers/       ProductsController.php
+├── Models/            Product.php
+├── Repositories/      ProductsRepository.php
+├── Services/          ProductsService.php
+├── Requests/          CreateProductRequest.php  UpdateProductRequest.php  ...
+├── Resources/         ProductShowResource.php   ProductListResource.php
+├── DTOs/              ProductDTO.php
+├── Mappers/           ProductDTOMapper.php
+├── Filters/           ProductFilter.php
+├── Policies/          ProductPolicy.php
+├── Events/            ProductCreated.php  ...
+├── Notifications/
+├── Scopes/
+└── Traits/
 ```
 
-> **📖 Ready to implement hooks in your application? Our [Comprehensive Hook Guide](./HOOKS.md) provides:**
-> - Complete step-by-step workflow examples
-> - Real-world hook implementations with code
-> - Advanced patterns and optimization techniques
-> - Hook generation commands and management tools
-> - Performance monitoring and debugging strategies
+---
 
-### Understanding the Generated Files
+## Layer by layer
 
-After running the generate command, a new folder for the specified table (model) will be created inside the `app` directory containing all the necessary files and folders.
+### Model
 
-### Generated Folders and Files
+`BaseModel` (integer PK) · `BaseUuidModel` · `BaseUlidModel`
 
-The package will create a folder inside the `app` directory for the specified table. This folder will include all necessary subfolders and classes, organized as follows:
-
-- **Controllers**: Handles the HTTP requests for your model.
-- **DTOs**: Data Transfer Objects for data encapsulation.
-- **Resources**: Formatting API responses.
-- **Policies**: Authorization policies.
-- **Selectors**: Methods to select specific data.
-- **Notifications**: Notifications related to the model.
-- **Events**: Events for the model.
-- **Listeners**: Event listeners.
-- **Mappers**: Data mappers.
-- **Models**: Eloquent model class.
-- **Repositories**: Data access layer.
-- **Requests**: Request validation classes.
-- **Services**: Business logic services with hook support.
-- **Scopes**: Query scopes.
-- **Traits**: Reusable traits.
-- **Filters**: Query filters.
-
-## What the Package Will Do for You
-
-The **Lara-CRUD** package automates the following tasks:
-
-- **Controller Generation**: HTTP controllers for managing CRUD operations.
-- **Data Transfer Objects (DTOs)**: Classes for data encapsulation and transfer.
-- **API Resources**: Resource classes for JSON serialization.
-- **Policies**: Authorization logic for the model.
-- **Selectors**: Helper methods to fetch specific data.
-- **Notifications**: Notification classes related to the model.
-- **Events and Listeners**: Event-driven architecture support.
-- **Data Mappers**: Classes for mapping data to different formats.
-- **Eloquent Models**: Model class for database operations.
-- **Repositories**: Repository pattern for data access logic.
-- **Request Classes**: Validation logic for input data.
-- **Service Classes**: Business logic encapsulation with hook system.
-- **Query Scopes**: Reusable query logic.
-- **Traits**: Shared functionality using traits.
-- **Query Filters**: Classes for filtering query results.
-
-## Features of the Package
-
-### Standardized API Responses
-
-The package provides a trait with methods to handle standardized API responses, making error handling and success responses consistent.
-
-#### Example: Success Response
+Override these static methods to control filtering and sorting:
 
 ```php
-$response = $this->setSuccessResponse("Operation successful.", HttpStatus::HTTP_OK);
-```
-
-## View Generation with Multiple UI Frameworks
-
-The lara-crud package now supports generating views for your CRUD operations with different UI frameworks:
-
-### Available UI Frameworks
-
-- **Bootstrap**: A clean, responsive Bootstrap-based UI
-- **AdminLTE**: A full-featured admin dashboard based on Bootstrap
-
-### Generating Views
-
-To generate views for your model, use the `--with-views` option with your preferred UI framework:
-
-```bash
-# Generate with AdminLTE
-php artisan lara-crud:go --with-views=adminlte
-
-# Generate with Bootstrap
-php artisan lara-crud:go --with-views=bootstrap
-
-# Or let the CLI prompt you to choose
-php artisan lara-crud:go --with-views
-```
-
-#### Prerequisites for AdminLTE
-If you choose the AdminLTE option, you'll need to have the AdminLTE package installed:
-```bash
-composer require jeroennoten/laravel-adminlte
-php artisan adminlte:install
-```
-If the package is not installed, the command will offer to install it for you.
-
-#### Customizing View Stubs
-You can publish the view stubs to customize them:
-
-```bash
-# Publish AdminLTE stubs
-php artisan vendor:publish --tag=lara-crud-adminlte-stubs
-
-# Publish Bootstrap stubs
-php artisan vendor:publish --tag=lara-crud-bootstrap-stubs
-
-# Or publish all view stubs
-php artisan vendor:publish --tag=lara-crud-views-stubs
-```
-
-This will publish the stubs to resources/stubs/views/ where you can modify them according to your needs.
-
-### Error Handling
-
-The package includes methods to handle and format error responses uniformly.
-
-#### Example: Error Response
-
-```php
-$response = $this->setErrorResponse("An error occurred.", HttpStatus::HTTP_ERROR);
-```
-
-### Transaction Management
-
-The package supports executing code within a database transaction and handling the response.
-
-#### Example: Transactional Code
-
-```php
-$response = $this->tryAndResponse(function () {
-    // Your transactional code here
-});
-```
-
-### Paginated Responses
-
-Automatically sets paginated responses with relevant metadata.
-
-#### Example: Paginated Response
-
-```php
-$response = $this->setPaginateResponse($paginator);
-```
-
-### HTTP Status Codes
-
-Provides constants for common HTTP status codes, ensuring consistency in API responses.
-
-```php
-HttpStatus::HTTP_OK // 200
-HttpStatus::HTTP_ERROR // 400
-// Other status codes...
-```
-
-## Complete Example
-
-### Creating a Product
-
-```http
-POST /api/products
-Content-Type: application/json
-
+class Product extends BaseModel
 {
-    "name": "Sample Product",
-    "description": "This is a sample product.",
-    "price": 19.99
+    protected $fillable = ['name', 'price', 'category_id'];
+
+    public static function getAllowedFilters(): array
+    {
+        return ['name', 'category_id', AllowedFilter::scope('active')];
+    }
+
+    public static function getAllowedIncludes(): array
+    {
+        return ['category', 'tags'];
+    }
+
+    // Sort direction is passed in by the repository — no request() calls here
+    public static function getDefaultSort(bool $sortAsc = false): string
+    {
+        return $sortAsc ? 'created_at' : '-created_at';
+    }
 }
 ```
 
-### Retrieving All Products
+---
 
-```http
-GET /api/products
+### Repository
+
+`BaseRepository` provides all common data access methods. Inject it; do not call it directly from controllers.
+
+```php
+// Available out of the box:
+$repo->paginate($requestQuery, $perPage);
+$repo->all();
+$repo->find($id);                          // findOrFail
+$repo->create(array $data);
+$repo->update($model, array $data);
+$repo->delete($model);
+$repo->count(array $filters = []);
+$repo->exists(array $filters);
+$repo->findMany(array $ids);
+$repo->createMany(array $records);         // bulk insert
+$repo->findWhere(array $conditions);
+$repo->firstWhere(array $conditions);
+$repo->minimalListWithFilter(with: [], where: [], limit: 250);
 ```
 
-### Retrieving a Single Product
+Extend it to add module-specific queries:
 
-```http
-GET /api/products/{id}
-```
-
-### Updating a Product
-
-```http
-PUT /api/products/{id}
-Content-Type: application/json
-
+```php
+class ProductsRepository extends BaseRepository
 {
-    "name": "Updated Product",
-    "description": "This is an updated product.",
-    "price": 29.99
+    public function __construct()
+    {
+        parent::__construct(new Product, new ProductSelector);
+    }
+
+    public function findByCategory(int $categoryId): Collection
+    {
+        return $this->getModel()->where('category_id', $categoryId)->get();
+    }
 }
 ```
 
-### Deleting a Product
+---
 
-```http
-DELETE /api/products/{id}
+### Service — Resource mode (default)
+
+The generated service uses Laravel API Resources by default. `ShowResource` wraps single items; `ListResource` wraps collections.
+
+```php
+class ProductsService extends BaseService
+{
+    protected string $resourceClass     = ProductShowResource::class;
+    protected string $listResourceClass = ProductListResource::class;
+
+    public function __construct(ProductsRepository $repository)
+    {
+        parent::__construct($repository);
+    }
+}
 ```
 
-## Contributing
+`BaseService` provides these methods automatically:
 
-Contributions are welcome! Feel free to submit issues and pull requests for improvements.
+| Method | HTTP verb | Wraps with |
+|---|---|---|
+| `paginate($request)` | GET /index | `$listResourceClass::collection()` |
+| `all()` | GET ?getAllRecords | `$listResourceClass::collection()` |
+| `show($id)` | GET /show | `new $resourceClass()` |
+| `create($data)` | POST | `new $resourceClass()` |
+| `update($data, $id)` | PUT/PATCH | `new $resourceClass()` |
+| `delete($id)` | DELETE | 204 message |
 
-## License
+---
+
+### Service — Mapper mode
+
+Replace the resource properties with a DTOMapper if you prefer manual transformation:
+
+```php
+class ProductsService extends BaseService
+{
+    public function __construct(
+        ProductsRepository $repository,
+        ProductDTOMapper   $mapper
+    ) {
+        parent::__construct($repository, $mapper);
+    }
+}
+```
+
+The mapper must extend `BaseDTOMapper` and implement `fromModel()`. The base class handles `fromCollection()`, `fromArray()`, and `fromPaginator()` automatically.
+
+---
+
+### Service — custom transformation
+
+Override `getResourceByType()` for full control:
+
+```php
+public function getResourceByType(string $type, $data = null): mixed
+{
+    return match($type) {
+        'list'  => ProductListResource::collection($data),
+        default => new ProductShowResource($data),
+    };
+}
+```
+
+---
+
+### Controller
+
+`BaseController` resolves the request class from `$requestMap`, validates it, and calls the service. You never write try-catch boilerplate — Laravel's exception handler takes care of it.
+
+```php
+class ProductsController extends BaseController
+{
+    protected array $requestMap = [
+        'index'  => IndexProductRequest::class,
+        'create' => CreateProductRequest::class,
+        'update' => UpdateProductRequest::class,
+        'delete' => DeleteProductRequest::class,
+        'show'   => ShowProductRequest::class,
+    ];
+
+    public function __construct(ProductsService $service)
+    {
+        parent::__construct($service);
+    }
+}
+```
+
+If a key is missing from `$requestMap` a descriptive `RuntimeException` is thrown immediately.
+
+---
+
+### Request
+
+`BaseRequest` defaults to `authorize(): bool { return true; }`. Override it per request class to enforce policies:
+
+```php
+class CreateProductRequest extends BaseRequest
+{
+    public function authorize(): bool
+    {
+        return $this->user()->can('create', Product::class);
+    }
+
+    public function rules(): array
+    {
+        return [
+            'name'  => 'required|string|max:255',
+            'price' => 'required|numeric|min:0',
+        ];
+    }
+}
+```
+
+---
+
+### Response envelope
+
+Every service method returns a `BaseResponse`. The controller's `tryAndResponse()` converts it to JSON.
+
+```json
+{
+    "status_code": 200,
+    "data": { ... },
+    "extra_data": {},
+    "meta": {
+        "currentPage": 1,
+        "lastPage": 5,
+        "perPage": 20,
+        "total": 98
+    },
+    "errors": {},
+    "message": "",
+    "source": "OPs"
+}
+```
+
+The `debug` block (query log) is **never included** unless you opt in via config — it will never leak to production responses:
+
+```php
+// config/lara_crud.php
+'expose_debug_in_response' => env('LARA_CRUD_EXPOSE_DEBUG', false),
+```
+
+---
+
+## Hook system
+
+Hooks let you attach code to any service method lifecycle without touching the method itself.
+
+### Execution flow
+
+```
+Before hooks (sync)   → validation, authorization, rate-limit checks
+       ↓
+Core service method   → the actual create/update/delete/show/paginate
+       ↓
+After hooks           → notifications, audit log, cache invalidation
+       ↓
+Error hooks           → alerting, rollback side-effects
+```
+
+### Creating a hook
+
+```bash
+php artisan lara-crud:hook ProductAuditHook
+```
+
+```php
+class ProductAuditHook extends BaseHookJob
+{
+    public function handle(HookContext $context): void
+    {
+        $model = $context->getModelFromResult();
+
+        ActivityLog::record(
+            user:    $context->user,
+            action:  $context->method,
+            subject: $model,
+        );
+    }
+
+    public function shouldExecute(HookContext $context): bool
+    {
+        return $context->isAfter() && $context->isSuccessful();
+    }
+}
+```
+
+### Registering hooks in a service
+
+Override `registerHooks()` in your service:
+
+```php
+class ProductsService extends BaseService
+{
+    protected string $resourceClass     = ProductShowResource::class;
+    protected string $listResourceClass = ProductListResource::class;
+
+    public function __construct(ProductsRepository $repository)
+    {
+        parent::__construct($repository);
+    }
+
+    protected function registerHooks(): void
+    {
+        parent::registerHooks();
+
+        // Runs synchronously before every create
+        $this->addServiceSyncHook('before', 'create', ValidateSkuHook::class);
+
+        // Queued after create/update/delete — does not slow down the response
+        $this->addServiceQueuedHook('after', 'create', SendProductCreatedEmailHook::class);
+        $this->addServiceQueuedHook('after', 'update', InvalidateProductCacheHook::class);
+        $this->addServiceQueuedHook('after', 'delete', InvalidateProductCacheHook::class);
+    }
+}
+```
+
+### Hook execution strategies
+
+| Method | Behavior |
+|---|---|
+| `addServiceSyncHook` | Immediate, blocks the request |
+| `addServiceQueuedHook` | Dispatched to a queue |
+| `addServiceDelayedHook` | Queued with a delay (seconds) |
+| `addServiceBatchedHook` | Accumulated into a batch job |
+
+### Extension points in BaseService
+
+Override these empty methods instead of registering hooks manually when you want category-level grouping:
+
+```php
+// Runs when hooks.default_service_hooks.global = true
+protected function registerGlobalServiceHooks(): void
+{
+    $this->addServiceSyncHook('before', 'create', AuthorizationHook::class);
+}
+
+// Runs when hooks.default_service_hooks.crud = true
+protected function registerCrudHooks(): void
+{
+    $this->addServiceQueuedHook('after', 'create', NotifyAdminHook::class);
+}
+
+// Runs when hooks.default_service_hooks.performance = true
+protected function registerPerformanceHooks(): void {}
+
+// Runs when hooks.default_service_hooks.caching = true
+protected function registerCachingHooks(): void {}
+```
+
+### HookContext reference
+
+`HookContext` is passed to every hook's `handle()` method:
+
+```php
+$context->method            // 'create', 'update', 'delete', 'show', 'paginate', ...
+$context->phase             // 'before' | 'after' | 'error'
+$context->data              // raw input passed to the service method
+$context->parameters        // extra parameters array
+$context->result            // the BaseResponse (after phase only)
+$context->service           // the service instance
+$context->user              // Auth::user()
+
+// Helpers
+$context->isBefore()
+$context->isAfter()
+$context->isSuccessful()    // status 2xx
+$context->getModelFromResult()      // extracts Eloquent model from result
+$context->getDataFromResult()       // extracts data payload from result
+$context->getStatusCode()
+$context->getMessage()
+$context->getModelAttributes()
+$context->getModelChanges()
+$context->wasModelRecentlyCreated()
+```
+
+### Hook management commands
+
+```bash
+php artisan lara-crud:hooks list          # list all registered hooks
+php artisan lara-crud:hooks stats         # execution statistics
+php artisan lara-crud:hooks debug         # debug a specific service
+php artisan lara-crud:hooks enable        # enable hooks globally
+php artisan lara-crud:hooks disable       # disable hooks globally
+php artisan lara-crud:hooks clear         # remove all hooks
+php artisan lara-crud:hooks test          # test-fire a hook
+php artisan lara-crud:hooks export        # export hook config to JSON
+```
+
+---
+
+## Configuration reference
+
+`config/lara_crud.php`
+
+```php
+'api_version'              => 'V1',
+'dto_enabled'              => false,
+'api_resource_enabled'     => true,
+'primary_key_fields_type'  => 'id',   // 'id' | 'uuid' | 'ulid'
+'ui_mode'                  => 'bootstrap', // 'bootstrap' | 'adminlte'
+'policies_enabled'         => false,
+
+// Set to true only in local/staging — query logs will appear in every API response
+'expose_debug_in_response' => env('LARA_CRUD_EXPOSE_DEBUG', false),
+
+'hooks' => [
+    'enabled'          => env('LARA_CRUD_HOOKS_ENABLED', true),
+    'debug'            => env('LARA_CRUD_HOOKS_DEBUG', false),
+    'queue_connection' => env('LARA_CRUD_QUEUE_CONNECTION', 'default'),
+    'batch_queue'      => env('LARA_CRUD_BATCH_QUEUE', 'batch'),
+
+    'default_service_hooks' => [
+        'global'      => true,   // registerGlobalServiceHooks()
+        'crud'        => true,   // registerCrudHooks()
+        'performance' => false,  // registerPerformanceHooks()
+        'caching'     => false,  // registerCachingHooks()
+    ],
+],
+
+'dirs' => [
+    'main-container-dir-name' => 'YourApp',
+    // ...
+],
+```
+
+---
+
+## Artisan commands
+
+| Command | Purpose |
+|---|---|
+| `lara-crud:go` | Interactive CRUD generator wizard |
+| `lara-crud:hook {name}` | Generate a hook class |
+| `lara-crud:hooks` | Manage hooks (list/stats/debug/clear/enable/disable/test/export) |
+| `lara-crud:api-controller` | Generate API controller only |
+| `lara-crud:model` | Generate model only |
+| `lara-crud:test` | Generate unit test |
+| `lara-crud:export-table` | Export table schema to JSON |
+
+---
+
+## Contributing / License
+
+Contributions are welcome. Please open an issue or pull request on [GitHub](https://github.com/ahmedebead/lara-crud).
 
 This package is open-sourced software licensed under the [MIT license](LICENSE).

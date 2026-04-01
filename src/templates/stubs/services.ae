@@ -1,31 +1,30 @@
 <?php
 namespace {{ DummyNamespace }};
 
-use App\{{ main-container-dir-name }}\{{ class_name_plural_name_space }}\Mappers\{{ ModelName }}DTOMapper;
 use App\{{ main-container-dir-name }}\{{ class_name_plural_name_space }}\Repositories\{{ ClassNamePlural }}Repository;
+use App\{{ main-container-dir-name }}\{{ class_name_plural_name_space }}\Resources\{{ ModelName }}ShowResource;
+use App\{{ main-container-dir-name }}\{{ class_name_plural_name_space }}\Resources\{{ ModelName }}ListResource;
 
 use Ahmed3bead\LaraCrud\BaseClasses\BaseService;
 
 /*
  * -----------------------------------------------------------------------
- * RESPONSE TRANSFORMATION — choose ONE of the two modes below:
+ * RESPONSE TRANSFORMATION — choose ONE of the three modes below:
  * -----------------------------------------------------------------------
  *
- * MODE 1 — DTO / Mapper (default, already wired up)
- *   Pass the mapper to parent::__construct() and it will be used
- *   automatically for all CRUD methods (paginate, show, create, update, all).
- *   No getResourceByType() override needed.
+ * MODE 1 — Laravel API Resource (default, already wired up)
+ *   ShowResource wraps single items (show, create, update).
+ *   ListResource wraps collections (paginate, all).
+ *   Change the class names below to swap resources per operation.
  *
- * MODE 2 — Laravel API Resource
- *   Remove the $mapper constructor arg and add this property instead:
+ * MODE 2 — DTO / Mapper
+ *   Remove the $resourceClass properties and replace the constructor with:
  *
- *     protected string $resourceClass = {{ ModelName }}Resource::class;
+ *     use App\{{ main-container-dir-name }}\{{ class_name_plural_name_space }}\Mappers\{{ ModelName }}DTOMapper;
  *
- *   Then simplify the constructor:
- *
- *     public function __construct({{ ClassNamePlural }}Repository $repository)
+ *     public function __construct({{ ClassNamePlural }}Repository $repository, {{ ModelName }}DTOMapper $mapper)
  *     {
- *         parent::__construct($repository);
+ *         parent::__construct($repository, $mapper);
  *     }
  *
  * MODE 3 — Custom
@@ -35,15 +34,11 @@ use Ahmed3bead\LaraCrud\BaseClasses\BaseService;
  */
 class {{ ClassNamePlural }}Service extends BaseService
 {
-    /**
-     * @var {{ ClassNamePlural }}Repository $repository
-     * @var {{ ModelName }}DTOMapper $mapper
-     * AE
-     */
-    private {{ ClassNamePlural }}Repository $repository;
+    protected string $resourceClass     = {{ ModelName }}ShowResource::class;
+    protected string $listResourceClass = {{ ModelName }}ListResource::class;
 
-    public function __construct({{ ClassNamePlural }}Repository $repository, {{ ModelName }}DTOMapper $mapper)
+    public function __construct({{ ClassNamePlural }}Repository $repository)
     {
-        parent::__construct($repository, $mapper);
+        parent::__construct($repository);
     }
 }
