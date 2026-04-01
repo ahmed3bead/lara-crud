@@ -77,22 +77,86 @@ abstract class BaseService
             'paginate',
             function() use ($request) {
                 $paginator = $this->getRepository()->paginate($request->query(), $request->query('perPage'));
-                $resourceData = $this->getResourceByType('list', $paginator->items());
-                return $this->response()->setData($resourceData)->setMeta([
-                    'currentPage' => $paginator->currentPage(),
-                    'lastPage' => $paginator->lastPage(),
-                    'path' => $paginator->path(),
-                    'totalCount' => count($paginator->items()),
-                    'perPage' => $paginator->perPage(),
-                    'total' => $paginator->total(),
-                ])->setStatusCode(HttpStatus::HTTP_OK);
+                $resourceData = $this->getResourceByType('list', $paginator);
+
+                // Mapper mode: fromPaginator() already returns ['items' => [...], 'meta' => [...]]
+                if (is_array($resourceData) && array_key_exists('items', $resourceData) && array_key_exists('meta', $resourceData)) {
+                    return $this->response()
+                        ->setData($resourceData['items'])
+                        ->setMeta($resourceData['meta'])
+                        ->setStatusCode(HttpStatus::HTTP_OK);
+                }
+
+                // Resource/raw mode: build meta from the original paginator
+                return $this->response()
+                    ->setData($resourceData)
+                    ->setMeta([
+                        'currentPage' => $paginator->currentPage(),
+                        'lastPage'    => $paginator->lastPage(),
+                        'path'        => $paginator->path(),
+                        'perPage'     => $paginator->perPage(),
+                        'total'       => $paginator->total(),
+                    ])
+                    ->setStatusCode(HttpStatus::HTTP_OK);
             },
             $request->query(),
             ['request' => $request, 'per_page' => $request->query('perPage')]
         );
     }
 
-    abstract function getResourceByType(string $type = 'index', $data = null);
+    /**
+     * Transform data into a resource representation.
+     *
+     * Resolution order:
+     *   1. Mapper mode  — if $mapper is set, delegate to BaseDTOMapper methods (backwards-compatible with v0.3.x).
+     *   2. Resource mode — if $resourceClass is defined on the concrete service, use a Laravel API Resource.
+     *   3. Raw fallback  — return $data as-is.
+     *
+     * Override this method in a concrete service for custom behaviour.
+     */
+    public function getResourceByType(string $type = 'index', $data = null): mixed
+    {
+        // 1. Mapper mode (v0.3.x backwards-compatible)
+        if ($this->getMapper() !== null) {
+            if (is_null($data)) {
+                return null;
+            }
+
+            if ($data instanceof \Illuminate\Contracts\Pagination\LengthAwarePaginator) {
+                return $this->getMapper()->fromPaginator($data);
+            }
+
+            if ($data instanceof \Illuminate\Database\Eloquent\Model) {
+                return $this->getMapper()->fromModel($data);
+            }
+
+            if ($data instanceof \Illuminate\Support\Collection) {
+                return $this->getMapper()->fromCollection($data);
+            }
+
+            if (is_array($data)) {
+                return $this->getMapper()->fromArray($data);
+            }
+
+            return $data;
+        }
+
+        // 2. Resource mode (Laravel API Resource)
+        if (property_exists($this, 'resourceClass') && $this->resourceClass) {
+            if (is_null($data)) {
+                return null;
+            }
+
+            if ($data instanceof \Illuminate\Database\Eloquent\Model) {
+                return new $this->resourceClass($data);
+            }
+
+            return $this->resourceClass::collection($data);
+        }
+
+        // 3. Raw fallback
+        return $data;
+    }
 
     /**
      * Web create with hook support
