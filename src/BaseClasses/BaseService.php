@@ -105,14 +105,27 @@ abstract class BaseService
     }
 
     /**
-     * Transform data into a resource representation.
+     * Transform $data into the response representation for the given $type.
      *
-     * Resolution order:
-     *   1. Mapper mode  — if $mapper is set, delegate to BaseDTOMapper methods (backwards-compatible with v0.3.x).
-     *   2. Resource mode — if $resourceClass is defined on the concrete service, use a Laravel API Resource.
-     *   3. Raw fallback  — return $data as-is.
+     * Resolution order (first match wins):
      *
-     * Override this method in a concrete service for custom behaviour.
+     *   1. MAPPER MODE — set via constructor:
+     *        public function __construct(MyRepository $repo, MyDTOMapper $mapper)
+     *        {
+     *            parent::__construct($repo, $mapper);
+     *        }
+     *      Delegates to BaseDTOMapper::fromPaginator(), fromModel(),
+     *      fromCollection(), or fromArray() based on the data type.
+     *
+     *   2. RESOURCE MODE — declare on the concrete service:
+     *        protected string $resourceClass = MyResource::class;
+     *      Wraps a single Model with new $resourceClass($data),
+     *      or a collection/paginator with $resourceClass::collection($data).
+     *
+     *   3. RAW FALLBACK — returns $data as-is when neither mapper
+     *      nor resourceClass is set.
+     *
+     * Override this method for full custom control per type ('show', 'list', 'index').
      */
     public function getResourceByType(string $type = 'index', $data = null): mixed
     {

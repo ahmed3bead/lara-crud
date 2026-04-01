@@ -6,6 +6,33 @@ use App\{{ main-container-dir-name }}\{{ class_name_plural_name_space }}\Reposit
 
 use Ahmed3bead\LaraCrud\BaseClasses\BaseService;
 
+/*
+ * -----------------------------------------------------------------------
+ * RESPONSE TRANSFORMATION — choose ONE of the two modes below:
+ * -----------------------------------------------------------------------
+ *
+ * MODE 1 — DTO / Mapper (default, already wired up)
+ *   Pass the mapper to parent::__construct() and it will be used
+ *   automatically for all CRUD methods (paginate, show, create, update, all).
+ *   No getResourceByType() override needed.
+ *
+ * MODE 2 — Laravel API Resource
+ *   Remove the $mapper constructor arg and add this property instead:
+ *
+ *     protected string $resourceClass = {{ ModelName }}Resource::class;
+ *
+ *   Then simplify the constructor:
+ *
+ *     public function __construct({{ ClassNamePlural }}Repository $repository)
+ *     {
+ *         parent::__construct($repository);
+ *     }
+ *
+ * MODE 3 — Custom
+ *   Override getResourceByType(string $type, $data): mixed in this class
+ *   for full control over how each type ('show', 'list', 'index') is transformed.
+ * -----------------------------------------------------------------------
+ */
 class {{ ClassNamePlural }}Service extends BaseService
 {
     /**
