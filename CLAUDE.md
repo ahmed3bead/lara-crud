@@ -102,10 +102,40 @@ The config file (`config/lara_crud.php`) controls which components are generated
 | `lara-crud:hooks` | Manage hooks (list/stats/debug/clear/enable/disable/test/export) |
 | `lara-crud:api-controller` | Generate API controller only |
 | `lara-crud:model` | Generate model only |
-| `lara-crud:test` | Generate unit test |
+| `lara-crud:unit-test` | Generate unit test |
+| `lara-crud:dirs` | Generate directory structure only |
 | `lara-crud:export-table` | Export table schema to JSON |
+
+### Selector Pattern
+
+`BaseDBSelect` is the base for selector classes. Each generated module has a selector (e.g., `UserSelector`) that defines which columns are returned per context. Override `listing()`, `show()`, and `minimum()` to control column projection. The selector is injected into `BaseRepository` and used in all query builder calls.
+
+### Traits
+
+`src/BaseClasses/traits/` contains:
+- **`ServiceTrait`** — Response helpers: `setResponse()`, `setErrorResponse()`, `setSuccessResponse()`, `setPaginateResponse()`, `tryAndResponse()` (wraps code in a DB transaction).
+- **`ServiceHookTrait`** — `executeWithHooks()` implementation; mixed into `BaseService`.
+- **`BaseScopes`** — Common Eloquent query scopes for models.
+- **`CanSaveQuietly`** — Save without firing model events.
+- **`RequestValidator`** — Validation helpers for request classes.
+
+### Keyword Search Filters
+
+Three Spatie QueryBuilder custom filters live in `src/BaseClasses/`:
+- `KeywordSearchFilter` — Search within a single model's columns.
+- `KeywordSearchFilterInTranslations` — Search within translation columns (spatie/laravel-translatable style).
+- `KeywordSearchFilterInTranslationsWithRelation` — Same but traverses a relation.
+
+### Stub Templates
+
+Generated files are produced from `.ae` stub templates in `src/templates/stubs/`. Publishing templates lets you customize generation output:
+
+```bash
+php artisan vendor:publish --tag=templates
+# Templates are published to resources/ahmed3bead/lara_crud/templates/
+```
 
 ### Dependencies
 
-- **Required:** `spatie/laravel-query-builder ^5.0\|^6.0`
+- **Required:** `spatie/laravel-query-builder ^5.0|^6.0|^7.0`
 - **Optional suggestions** (not autoloaded): `spatie/laravel-activitylog`, `spatie/laravel-permission`, `laravel/sanctum`, `jeroennoten/laravel-adminlte`, and others listed in `composer.json` under `suggest`.
