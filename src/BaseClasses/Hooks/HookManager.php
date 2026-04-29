@@ -17,7 +17,7 @@ class HookManager
     private array $middleware = [];
     private bool $debugMode = false;
 
-    public function __construct(HookRegistry $registry = null)
+    public function __construct(?HookRegistry $registry = null)
     {
         $this->registry = $registry ?? new HookRegistry();
         $this->debugMode = config('lara-crud.hooks.debug', false);

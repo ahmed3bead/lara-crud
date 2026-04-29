@@ -226,14 +226,14 @@ class BaseUuidModel extends Model
         'deleted_at' => 'datetime:Y-m-d H:i:s',
     ];
 
-    public function localTimezone($value = null)
+    public function localTimezone(mixed $value = null): ?string
     {
         return $value ? Carbon::parse($value)->setTimezone(env("APP_TIMEZONE"))->toDateTimeString() : null;
     }
 
 
 
-    public function belongsToThrough($related, $through, $firstKey = null, $secondKey = null, $localKey = null, $throughKey = null)
+    public function belongsToThrough($related, $through, ?string $firstKey = null, ?string $secondKey = null, ?string $localKey = null, ?string $throughKey = null)
     {
         $firstKey = $firstKey ?: $through::getForeignKey();
         $secondKey = $secondKey ?: $related::getForeignKey();

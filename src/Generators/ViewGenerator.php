@@ -21,7 +21,7 @@ class ViewGenerator
     protected $namespace_group;
     protected $endpoint;
 
-    public function __construct($modelName, $tableName, $framework = 'bootstrap', $namespace_group = null, $endpoint = null)
+    public function __construct(string $modelName, string $tableName, string $framework = 'bootstrap', ?string $namespace_group = null, ?string $endpoint = null)
     {
         $this->configs = config('lara_crud');
         $this->modelName = $modelName;

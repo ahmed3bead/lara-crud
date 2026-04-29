@@ -433,7 +433,7 @@ trait ServiceHookTrait
         string     $method,
         mixed      $data = null,
         array      $parameters = [],
-        \Exception $error = null
+        ?\Exception $error = null
     ): void
     {
         if (!$this->shouldExecuteHooks()) {

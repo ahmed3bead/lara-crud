@@ -27,16 +27,16 @@ trait BaseCrudCommand
         return $this->table_name;
     }
 
-    protected function getStub($currentTemplateName = null): string
+    protected function getStub(?string $currentTemplateName = null): string
     {
         $templatesArray = config('lara_crud.template-names');
         return $this->getTemplatePath($templatesArray[$currentTemplateName ?? $this->currentTemplateName]);
     }
 
     /**
-     * @param null $table_name
+     * @param string $table_name
      */
-    public function setTableName($table_name): void
+    public function setTableName(string $table_name): void
     {
         $migrationName = Str::plural(Str::snake($table_name));
         $this->table_name = $this->option('table-name') ?: $migrationName;

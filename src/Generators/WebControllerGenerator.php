@@ -16,7 +16,7 @@ class WebControllerGenerator
     protected $namespace_group;
     protected $endpoint;
 
-    public function __construct($modelName, $tableName, $namespace_group = null, $endpoint = null)
+    public function __construct(string $modelName, string $tableName, ?string $namespace_group = null, ?string $endpoint = null)
     {
         $this->modelName = $modelName;
         $this->tableName = $tableName;

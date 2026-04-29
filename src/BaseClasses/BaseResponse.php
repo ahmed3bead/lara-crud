@@ -51,7 +51,7 @@ class BaseResponse implements JsonSerializable
      */
     private string $source = 'OPs';
 
-    public function __construct($statusCode = 200, $data = null)
+    public function __construct(int $statusCode = 200, mixed $data = null)
     {
         $this->statusCode = $statusCode;
         $this->setStatusCode($statusCode);
@@ -137,17 +137,17 @@ class BaseResponse implements JsonSerializable
     }
 
     /**
-     * @return null
+     * @return mixed
      */
-    public function getExtraData()
+    public function getExtraData(): mixed
     {
         return $this->extraData;
     }
 
     /**
-     * @param null $extraData
+     * @param mixed $extraData
      */
-    public function setExtraData($extraData): void
+    public function setExtraData(mixed $extraData): void
     {
         $this->extraData = $extraData;
     }

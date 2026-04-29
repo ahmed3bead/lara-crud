@@ -55,7 +55,7 @@ trait BaseScopes
         return $query->whereYear('created_at', $year);
     }
 
-    public function scopeByMonth(Builder $query, $month, $year = null)
+    public function scopeByMonth(Builder $query, int|string $month, ?int $year = null)
     {
         return $query->whereMonth('created_at', $month)
             ->when($year, function ($query) use ($year) {
@@ -63,7 +63,7 @@ trait BaseScopes
             });
     }
 
-    public function scopeByDay(Builder $query, $day, $month = null, $year = null)
+    public function scopeByDay(Builder $query, int|string $day, ?int $month = null, ?int $year = null)
     {
         return $query->whereDay('created_at', $day)
             ->when($month, function ($query) use ($month) {

@@ -19,7 +19,7 @@ abstract class BaseService
     /** Resource class used for collection responses (paginate, all). Falls back to $resourceClass. */
     protected string $listResourceClass = '';
 
-    public function __construct($repository, $mapper = null)
+    public function __construct(mixed $repository, mixed $mapper = null)
     {
         $this->setRepository($repository);
         $this->mapper = $mapper;
@@ -133,7 +133,7 @@ abstract class BaseService
      *
      * Override this method for full custom control per type ('show', 'list', 'index').
      */
-    public function getResourceByType(string $type = 'index', $data = null): mixed
+    public function getResourceByType(string $type = 'index', mixed $data = null): mixed
     {
         // 1. Mapper mode (v0.3.x backwards-compatible)
         if ($this->getMapper() !== null) {

@@ -10,7 +10,7 @@ class KeywordSearchFilterInTranslationsWithRelation implements Filter
     public $fields = [];
     public $relationName;
 
-    public function __construct(array $fields = ['name'], string $relationName = null)
+    public function __construct(array $fields = ['name'], ?string $relationName = null)
     {
         $this->fields = $fields;
         $this->relationName = $relationName;
