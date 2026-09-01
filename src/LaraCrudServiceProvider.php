@@ -4,7 +4,6 @@ namespace Ahmed3bead\LaraCrud;
 
 use Ahmed3bead\LaraCrud\BaseClasses\Hooks\HookManager;
 use Ahmed3bead\LaraCrud\BaseClasses\Hooks\HookRegistry;
-use Ahmed3bead\LaraCrud\Console\Commands\GenerateUnitTestCommand;
 use Ahmed3bead\LaraCrud\Console\Commands\HooksManagementCommand;
 use Ahmed3bead\LaraCrud\Console\Commands\MakeHookCommand;
 use Illuminate\Support\ServiceProvider;
@@ -87,7 +86,6 @@ class LaraCrudServiceProvider extends ServiceProvider
                 CrudBlueprintDirsCommand::class,
                 CrudBlueprintExportTableToJson::class,
                 CrudBlueprintModelCommand::class,
-                GenerateUnitTestCommand::class,
                 HooksManagementCommand::class,
                 MakeHookCommand::class,
             ]);

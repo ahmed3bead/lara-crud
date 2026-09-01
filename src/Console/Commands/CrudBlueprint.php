@@ -77,10 +77,6 @@ class CrudBlueprint extends Command
                 $this->createViews($name, $table, $viewFramework);
             }
 
-            if ($this->confirm('Do you need to create Unit Test for --> ' . $name . ' ?', true)) {
-                $this->createUnitTest($name, $table, $fields);
-            }
-
             $this->info('All Done');
             $this->warn('Ahmed Ebead');
         } catch (\Exception $e) {
@@ -224,17 +220,6 @@ class CrudBlueprint extends Command
         $viewGenerator->generate();
 
         $this->info('Bootstrap views generated successfully!');
-    }
-
-    private function createUnitTest(mixed $name, $table, string $fields)
-    {
-        $namespace_group = $this->option('namespace_group') ?: null;
-        $this->call('lara-crud:unit-test', [
-            'name' => $name,
-            '--table-name' => $table,
-            '--namespace_group' => $namespace_group,
-        ]);
-        $this->info('Unit Test created successfully!');
     }
 
     protected function processJSONFields($file)

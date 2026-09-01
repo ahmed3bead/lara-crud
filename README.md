@@ -501,8 +501,9 @@ php artisan lara-crud:hooks export        # export hook config to JSON
 | `lara-crud:hooks` | Manage hooks (list/stats/debug/clear/enable/disable/test/export) |
 | `lara-crud:api-controller` | Generate API controller only |
 | `lara-crud:model` | Generate model only |
-| `lara-crud:test` | Generate unit test |
 | `lara-crud:export-table` | Export table schema to JSON |
+
+> **Removed in v0.8.0:** The `lara-crud:unit-test` command and the test-generation step in `lara-crud:go` have been removed. The generated test stubs contained placeholder assertions and unfilled factory data, so they always passed without verifying anything — or failed outright on missing factories and routes. Projects should write real tests tailored to their domain instead of relying on scaffolded stubs.
 
 ---
 

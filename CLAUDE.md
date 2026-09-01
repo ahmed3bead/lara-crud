@@ -102,7 +102,6 @@ The config file (`config/lara_crud.php`) controls which components are generated
 | `lara-crud:hooks` | Manage hooks (list/stats/debug/clear/enable/disable/test/export) |
 | `lara-crud:api-controller` | Generate API controller only |
 | `lara-crud:model` | Generate model only |
-| `lara-crud:unit-test` | Generate unit test |
 | `lara-crud:dirs` | Generate directory structure only |
 | `lara-crud:export-table` | Export table schema to JSON |
 

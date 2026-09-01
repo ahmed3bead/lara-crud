@@ -44,7 +44,6 @@ return [
         // Filters and Requests
         'filters' => 'filters.ae',
         'request' => 'request.ae',
-        'test' => 'test.ae',
 
         // API Resource templates
         'list-resource' => 'list-resource.ae',
