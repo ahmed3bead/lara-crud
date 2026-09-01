@@ -1,6 +1,7 @@
 {
     "name": "ahmedebead/lara-crud",
     "description": "A comprehensive Laravel package to generate CRUD operations with advanced features for APIs and web applications.",
+    "version": "0.8.0",
     "type": "library",
     "keywords": ["laravel", "crud", "api", "generator", "scaffold", "dto", "repository", "service"],
     "homepage": "https://github.com/ahmedebead/lara-crud",
