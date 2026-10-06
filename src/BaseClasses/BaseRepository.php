@@ -53,7 +53,7 @@ class BaseRepository
     public function paginate($requestQuery, $perPage = 20)
     {
         $sortAsc = (bool) ($requestQuery['sortAsc'] ?? false);
-        return QueryBuilder::for($this->getModel()->select($this->getSelector()->listing()))
+        return QueryBuilder::for($this->getModel()->select($this->columns($this->getSelector()->listing())))
             ->allowedFilters($this->getModel()->getAllowedFilters())
             ->allowedFields($this->getModel()->getAllowedFields())
             ->allowedIncludes(
@@ -66,7 +66,7 @@ class BaseRepository
 
     public function all()
     {
-        return QueryBuilder::for($this->getModel()->select($this->getSelector()->listing()))
+        return QueryBuilder::for($this->getModel()->select($this->columns($this->getSelector()->listing())))
             ->allowedFilters($this->getModel()->getAllowedFilters())
             ->allowedFields($this->getModel()->getAllowedFields())
             ->allowedIncludes(
@@ -79,7 +79,7 @@ class BaseRepository
     public function find(string $id)
     {
         return QueryBuilder::for($this->getModel()->query())
-            ->select($this->getSelector()->show())
+            ->select($this->columns($this->getSelector()->show()))
             ->allowedIncludes($this->getModel()->getAllowedIncludes())
             ->findOrFail($id);
     }
@@ -123,7 +123,7 @@ class BaseRepository
         }
 
         return QueryBuilder::for($query)
-            ->select($this->getSelector()->minimum())
+            ->select($this->columns($this->getSelector()->minimum()))
             ->limit($limit)
             ->allowedFilters($this->getModel()->getAllowedFilters())
             ->allowedFields($this->getModel()->getAllowedFields())
@@ -164,5 +164,15 @@ class BaseRepository
     public function firstWhere(array $conditions): ?Model
     {
         return $this->getModel()->where($conditions)->first();
+    }
+
+    /**
+     * An empty selector compiles to `select  from …` (invalid SQL), because
+     * Laravel only defaults to `*` when the column list is null. Generated
+     * selectors are empty whenever the generator found no fields.
+     */
+    private function columns(array $columns): array
+    {
+        return $columns === [] ? ['*'] : $columns;
     }
 }
